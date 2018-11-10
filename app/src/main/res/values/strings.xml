@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">MVC</string>
+    <string name="app_name_ex">MachineVision</string>
+    <string name="title_activity_main2">Main2Activity</string>
+    <string name="edit_addqdiag_title">Enter query</string>
+    <string name="edit_addqdiag_hint">Title</string>
+    <string name="main_error">Connection error</string>
+    <string name="main_connecting">Connecting...</string>
+    <string name="main_menu_retry" >Retry</string>
+    <string name="main_menu_chip">Change server IP</string>
+    <string name="query_more">Show more</string>
+    <string name="edit_deleted">File added to false-list</string>
+    <string name="edit_del_undo">UNDO</string>
+</resources>
