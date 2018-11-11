@@ -11,4 +11,11 @@
     <string name="query_more">Show more</string>
     <string name="edit_deleted">File added to false-list</string>
     <string name="edit_del_undo">UNDO</string>
+    <string name="edit_nores">This query has no results</string>
+    <string name="edit_err_title_void">Please enter title</string>
+    <string name="edit_saved">Saved.</string>
+    <string name="edit_save">Save Object?</string>
+    <string name="no">No</string>
+    <string name="yes">Yes</string>
+    <string name="edit_setrtc">Count to get</string>
 </resources>

@@ -3,24 +3,24 @@ package ru.zont.mvc;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     WeakReference<MainActivity> wr;
     String ip;
     boolean idle = false;
+    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,10 +41,11 @@ public class MainActivity extends AppCompatActivity {
 
         wr = new WeakReference<>(this);
 
-        RecyclerView recyclerView = findViewById(R.id.main_recycler);
+        recyclerView = findViewById(R.id.main_recycler);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(new ObjectAdapter(new String[]{"Object 1", "Object 2", "Object 3"}));
+
+        setAdapter();
 
         //new Connect(wr).execute();
         new Thread(new Runnable(){
@@ -79,6 +81,29 @@ public class MainActivity extends AppCompatActivity {
         idle = true;
     }
 
+    private void setAdapter() {
+        File dir = new File(getFilesDir(), AppFields.ARTIFATCOBJ_DIR_NAME);
+        if (dir.exists() && dir.isDirectory() && dir.listFiles().length > 0) {
+            final File[] files = dir.listFiles();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    ArrayList<ArtifactObject> objects = new ArrayList<>();
+                    for (File file : files) {
+                        try {
+                            ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
+                            objects.add((ArtifactObject) in.readObject());
+                            in.close();
+                        } catch (IOException | ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    recyclerView.setAdapter(new ObjectAdapter(objects));
+                }
+            }).start();
+        }
+    }
+
     public void onClickAdd(View v) {
         startActivity( new Intent(MainActivity.this, EditActivity.class).putExtra("new", true) );
     }
@@ -91,14 +116,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
-        menu.findItem(R.id.mein_menu_retry).setVisible(!Client.isConnected());
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.mein_menu_retry: new Connect(wr).execute(); return true;
             case R.id.main_menu_editip:
                 final EditText et = new EditText(this);
                 et.setText(ip);
@@ -128,36 +151,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         idle = true;
+        if (recyclerView != null)
+            if (recyclerView.getAdapter() != null)
+                setAdapter(); // FIXME 11.11.18
         super.onResume();
-    }
-
-    private static class Connect extends AsyncTask<Void, Void, Boolean> {
-        WeakReference<MainActivity> wr;
-        private Connect(WeakReference<MainActivity> wr) {this.wr = wr;}
-
-        @Override
-        protected Boolean doInBackground(Void... voids) {
-            wr.get().idle = false;
-            try {
-                Client.establish(wr.get().ip, 1337);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean aBoolean) {
-            if (aBoolean) {
-                ((ImageView)wr.get().findViewById(R.id.main_svst)).setImageResource(android.R.drawable.presence_online);
-            } else {
-                Toast.makeText(wr.get(), R.string.main_error, Toast.LENGTH_SHORT).show();
-            }
-
-            wr.get().invalidateOptionsMenu();
-            ((TextView)wr.get().findViewById(R.id.main_title)).setText(R.string.app_name_ex);
-            wr.get().idle = true;
-        }
     }
 }

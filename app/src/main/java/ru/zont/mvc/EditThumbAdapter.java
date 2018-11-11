@@ -26,8 +26,19 @@ public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> 
 
     private ArrayList<String> whitelist;
     private ArrayList<String> blacklist;
+    private String thumbUrl;
 
-    EditThumbAdapter(ArrayList<String> urls) { whitelist = urls; blacklist = new ArrayList<>(); }
+    private Runnable onEdit;
+
+    int mOffset = 0;
+
+    EditThumbAdapter(ArrayList<String> urls, Runnable onEdit) {
+        whitelist = urls;
+        blacklist = new ArrayList<>();
+        this.onEdit = onEdit;
+
+        if (urls.size() > 0) thumbUrl = urls.get(0);
+    }
 
     @NonNull
     @Override
@@ -49,6 +60,7 @@ public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> 
     public void add(ArrayList<String> list) {
         whitelist.addAll(list);
         notifyDataSetChanged();
+        onEdit.run();
         invalidateBlacklist();
     }
 
@@ -56,17 +68,19 @@ public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> 
         whitelist.add(position, url);
         notifyItemInserted(position);
         notifyItemRangeChanged(position, whitelist.size());
+        onEdit.run();
         invalidateBlacklist();
     }
 
-    public String remove(int position) {
+    String remove(int position) {
         String res = whitelist.remove(position);
         notifyItemRemoved(position);
         notifyItemRangeChanged(position, whitelist.size());
+        onEdit.run();
         return res;
     }
 
-    public String blacklist(int position) {
+    String blacklist(int position) {
         String res = remove(position);
         blacklist.add(res);
         return res;
@@ -77,7 +91,12 @@ public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> 
         return whitelist.size();
     }
 
-    public ArrayList<String> getBlacklist() { return blacklist; }
+    ArrayList<String> getBlacklist() { return blacklist; }
+
+    String getThumbUrl() {
+        if (whitelist.size() > 0) return whitelist.get(0);
+        else return thumbUrl;
+    }
 
     private void invalidateBlacklist() {
         for (String s : whitelist)

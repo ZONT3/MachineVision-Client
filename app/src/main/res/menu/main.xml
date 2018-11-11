@@ -7,10 +7,4 @@
         android:icon="@android:drawable/ic_menu_edit"
         android:title="Change IP"
         app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/mein_menu_retry"
-        android:checkable="false"
-        android:title="@string/main_menu_retry"
-        android:visible="false"
-        app:showAsAction="ifRoom" />
 </menu>

@@ -1,5 +1,6 @@
 package ru.zont.mvc;
 
+import android.annotation.SuppressLint;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -8,8 +9,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+
+import java.util.ArrayList;
+
 public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder> {
-    private String[] mDataset;
+    private ArrayList<ArtifactObject> mDataset;
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView mThumb;
@@ -28,7 +33,7 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
         }
     }
 
-    ObjectAdapter(String[] myDataset) {
+    ObjectAdapter(ArrayList<ArtifactObject> myDataset) {
         mDataset = myDataset;
     }
 
@@ -40,13 +45,25 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
         return new ViewHolder(v);
     }
 
+    @SuppressLint("DefaultLocale")
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.mTitle.setText(mDataset[position]);
+        ArtifactObject object = mDataset.get(position);
+        holder.mTitle.setText(object.getTitle());
+        holder.mMeta.setText(String.format("%d Queries%s",
+                object.getQueriesSize(),
+                object.getTotalBlacklisted() > 0
+                        ? ", "+object.getTotalBlacklisted()+" blacklisted"
+                        : ""));
+
+        if (object.getThumbnail() != null)
+            Glide.with(holder.mThumb)
+                    .load(object.getThumbnail())
+                    .into(holder.mThumb);
     }
 
     @Override
     public int getItemCount() {
-        return mDataset.length;
+        return mDataset.size();
     }
 }

@@ -12,7 +12,6 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        android:background="@color/colorThumbBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -31,12 +30,16 @@
 
     <TextView
         android:id="@+id/main_item_meta"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
         android:text="228 Images"
         android:textAppearance="@android:style/TextAppearance.Material.Subhead"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/main_item_lastact"
         app:layout_constraintStart_toEndOf="@+id/main_item_thumb"
         app:layout_constraintTop_toBottomOf="@+id/main_item_title" />
 
@@ -60,4 +63,50 @@
         android:text="Edited 22:28"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <View
+        android:id="@+id/divider6"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintBottom_toTopOf="@+id/main_item_thumb"
+        app:layout_constraintEnd_toEndOf="@+id/main_item_thumb"
+        app:layout_constraintStart_toStartOf="@+id/main_item_thumb" />
+
+    <View
+        android:id="@+id/divider7"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintEnd_toEndOf="@+id/main_item_thumb"
+        app:layout_constraintStart_toStartOf="@+id/main_item_thumb"
+        app:layout_constraintTop_toBottomOf="@+id/main_item_thumb" />
+
+    <View
+        android:id="@+id/divider8"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintBottom_toBottomOf="@+id/main_item_thumb"
+        app:layout_constraintEnd_toStartOf="@+id/main_item_thumb"
+        app:layout_constraintTop_toTopOf="@+id/main_item_thumb" />
+
+    <View
+        android:id="@+id/divider9"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintBottom_toBottomOf="@+id/main_item_thumb"
+        app:layout_constraintStart_toEndOf="@+id/main_item_thumb"
+        app:layout_constraintTop_toTopOf="@+id/main_item_thumb" />
+
 </android.support.constraint.ConstraintLayout>
