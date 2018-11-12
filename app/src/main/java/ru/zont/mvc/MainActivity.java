@@ -15,12 +15,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,7 +24,6 @@ public class MainActivity extends AppCompatActivity {
     WeakReference<MainActivity> wr;
     String ip;
     boolean idle = false;
-    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,13 +36,10 @@ public class MainActivity extends AppCompatActivity {
 
         wr = new WeakReference<>(this);
 
-        recyclerView = findViewById(R.id.main_recycler);
+        RecyclerView recyclerView = findViewById(R.id.main_recycler);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        setAdapter();
-
-        //new Connect(wr).execute();
         new Thread(new Runnable(){
             @Override
             public void run() {
@@ -79,29 +71,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }.set(this).start();
         idle = true;
-    }
-
-    private void setAdapter() {
-        File dir = new File(getFilesDir(), AppFields.ARTIFATCOBJ_DIR_NAME);
-        if (dir.exists() && dir.isDirectory() && dir.listFiles().length > 0) {
-            final File[] files = dir.listFiles();
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    ArrayList<ArtifactObject> objects = new ArrayList<>();
-                    for (File file : files) {
-                        try {
-                            ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-                            objects.add((ArtifactObject) in.readObject());
-                            in.close();
-                        } catch (IOException | ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    recyclerView.setAdapter(new ObjectAdapter(objects));
-                }
-            }).start();
-        }
     }
 
     public void onClickAdd(View v) {
@@ -151,9 +120,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         idle = true;
-        if (recyclerView != null)
-            if (recyclerView.getAdapter() != null)
-                setAdapter(); // FIXME 11.11.18
         super.onResume();
     }
 }

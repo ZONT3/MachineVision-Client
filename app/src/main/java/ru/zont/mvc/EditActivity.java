@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -24,10 +23,8 @@ import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -274,7 +271,7 @@ public class EditActivity extends AppCompatActivity {
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void save(@Nullable final Runnable postExec) {
+    private void save() {
         Log.d("EditActivity", "Extracting blacklists...");
         String thumbnail = null;
         for (ArtifactObject.Query q : queries) {
@@ -288,31 +285,49 @@ public class EditActivity extends AppCompatActivity {
             if (thumbnail == null) thumbnail = adapter.getThumbUrl();
         }
 
-
         Log.d("EditActivity", "Generating ArtifactObject...");
         final ArtifactObject object = new ArtifactObject(objTitle.getText().toString(), queries);
         object.setThumbnail(thumbnail);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Log.d("EditActivity", "Serializing ArtifactObject...");
-                try {
-                    File file = new File(aoDir, object.id);
-                    if (file.exists()) file.delete();
-                    ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
-                    out.writeObject(object);
-                    out.flush();
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return;
-                }
-                Log.d("EditActivity", "Looks like it saved successfully.");
-                edited = false;
-                if (postExec != null) postExec.run();
+        new SendArtifact(object, this).execute();
+    }
+
+    private static class SendArtifact extends AsyncTask<Void, Void, Void> {
+        private Exception e;
+
+        private ArtifactObject object;
+        private WeakReference<EditActivity> wr;
+        private SendArtifact(ArtifactObject object, EditActivity activity) {
+            this.object = object;
+            wr = new WeakReference<>(activity);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            wr.get().pb.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            try {
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put("request_code", "new_object");
+                hashMap.put("artifact_object", object);
+                Log.d("DEBUG", new Gson().toJson(hashMap));
+                String result = Client.sendJsonForResult(new Gson().toJson(hashMap));
+            } catch (IOException e) {
+                e.printStackTrace();
+                this.e = e;
             }
-        }).start();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            if (e != null) Toast.makeText(wr.get(), e.getMessage(), Toast.LENGTH_LONG).show();
+            else Toast.makeText(wr.get(), R.string.edit_saved, Toast.LENGTH_SHORT).show();
+            wr.get().finish();
+        }
     }
 
     public void onSave(View v) {
@@ -320,18 +335,7 @@ public class EditActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
             return;
         }
-        save(new Runnable() {
-            WeakReference<EditActivity> wr;
-            Runnable set(EditActivity activity) {
-                wr = new WeakReference<>(activity);
-                return this;
-            }
-
-            @Override
-            public void run() {
-                Toast.makeText(wr.get(), R.string.edit_saved, Toast.LENGTH_SHORT).show();
-            }
-        }.set(this));
+        save();
     }
 
     @Override
@@ -347,9 +351,7 @@ public class EditActivity extends AppCompatActivity {
                     .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            pb.setVisibility(View.VISIBLE);
-                            final WeakReference<EditActivity> wr = new WeakReference<>(EditActivity.this);
-                            new AsyncSave(wr).execute();
+                            onSave(null);
                         }})
                     .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
                         @Override
@@ -359,28 +361,6 @@ public class EditActivity extends AppCompatActivity {
                     .setNeutralButton(android.R.string.cancel, null)
                     .create().show();
         } else super.onBackPressed();
-    }
-
-    private void superOnBackPressed() {
-        super.onBackPressed();
-    }
-
-    private static class AsyncSave extends AsyncTask<Void, Void, Void> {
-        WeakReference<EditActivity> wr;
-        AsyncSave(WeakReference<EditActivity> wr) {
-            this.wr = wr;
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            wr.get().save(null);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            wr.get().superOnBackPressed();
-        }
     }
 
     private int getDefaultRtcount() {
