@@ -3,7 +3,9 @@ package ru.zont.mvc;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,15 +16,22 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    Toolbar toolbar;
-    WeakReference<MainActivity> wr;
-    String ip;
+    private Toolbar toolbar;
+    private ProgressBar main_pb;
+    private RecyclerView recyclerView;
+    private WeakReference<MainActivity> wr;
+    private String ip;
     boolean idle = false;
 
     @Override
@@ -33,44 +42,87 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         ip = getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).getString("svip", "dltngz.ddns.net");
-
+        main_pb = findViewById(R.id.main_pb);
         wr = new WeakReference<>(this);
 
-        RecyclerView recyclerView = findViewById(R.id.main_recycler);
+        recyclerView = findViewById(R.id.main_recycler);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        new Thread(new Runnable(){
+        Client.setup(ip, 1337);
+
+        new ListGetter(new ListGetter.OnPostExecute() {
             @Override
-            public void run() {
-                MainActivity act;
-                do {
-                    boolean b = false;
-                    act = wr.get();
-                    if (act.idle) {
-                        try {
-                            Client.establish(act.ip, 1337);
-                            b = true;
-                        } catch (IOException e) {
-                            System.out.println(e.getMessage());
-                        }
-                        ((ImageView)act.findViewById(R.id.main_svst))
-                                .setImageResource(b
-                                        ? android.R.drawable.presence_online
-                                        : android.R.drawable.presence_offline);
+            public void onPostExecute(ArtifactObject[] objects, Exception e) {
+                if (e != null || objects == null) {
+                    Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
+                    toolbar.setTitle(R.string.main_restart);
+                } else recyclerView.setAdapter(new ObjectAdapter(objects));
+
+                main_pb.setVisibility(View.GONE);
+                idle = true;
+                new Thread(new Runnable(){
+                    @Override
+                    public void run() {
+                        MainActivity act;
+                        do {
+                            boolean b = false;
+                            act = wr.get();
+                            if (act.idle) {
+                                try {
+                                    Client.establish();
+                                    b = true;
+                                } catch (IOException e) {
+                                    System.out.println(e.getMessage());
+                                }
+                                ((ImageView)act.findViewById(R.id.main_svst))
+                                        .setImageResource(b
+                                                ? android.R.drawable.presence_online
+                                                : android.R.drawable.presence_offline);
+                            }
+                            //Log.d("Checker Thread", "Tick");
+                            try { Thread.sleep(3000); } catch (InterruptedException e) { e.printStackTrace(); return; }
+                        } while (!act.isFinishing() && !act.isDestroyed());
                     }
-                    //Log.d("Checker Thread", "Tick");
-                    try { Thread.sleep(3000); } catch (InterruptedException e) { e.printStackTrace(); return; }
-                } while (!act.isFinishing() && !act.isDestroyed());
+                }).start();
             }
-        }){
-            WeakReference<MainActivity> wr;
-            Thread set(MainActivity activity) {
-                wr = new WeakReference<>(activity);
-                return this;
+        }).execute();
+    }
+
+    private static class ListGetter extends AsyncTask<Void, Void, ArtifactObject[]> {
+        private OnPostExecute postExec;
+        private ListGetter(@Nullable OnPostExecute postExec) {
+            this.postExec = postExec;
+        }
+
+        private Exception e;
+
+        @Override
+        protected ArtifactObject[] doInBackground(Void... voids) {
+            HashMap<String, String> request = new HashMap<>();
+            request.put("request_code", "list_objects");
+            try {
+                return new Gson().fromJson(Client.sendJsonForResult(new Gson().toJson(request)), ListResponse.class).objects;
+            } catch (IOException e) {
+                e.printStackTrace();
+                this.e = e;
+                return null;
             }
-        }.set(this).start();
-        idle = true;
+        }
+
+        @Override
+        protected void onPostExecute(ArtifactObject[] objects) {
+            if (postExec != null) postExec.onPostExecute(objects, e);
+        }
+
+        interface OnPostExecute {
+            void onPostExecute(ArtifactObject[] objects, Exception e);
+        }
+
+        static class ListResponse {
+            private String response_code;
+            private ArtifactObject[] objects;
+        }
     }
 
     public void onClickAdd(View v) {
@@ -119,7 +171,21 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        idle = true;
+        if (recyclerView != null && recyclerView.getAdapter() != null) {
+            main_pb.setVisibility(View.VISIBLE);
+            new ListGetter(new ListGetter.OnPostExecute() {
+                @Override
+                public void onPostExecute(ArtifactObject[] objects, Exception e) {
+                    if (e != null || objects == null) {
+                        Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
+                        toolbar.setTitle(R.string.main_restart);
+                    } else ((ObjectAdapter) recyclerView.getAdapter()).updateDataset(objects);
+
+                    main_pb.setVisibility(View.GONE);
+                    idle = true;
+                }
+            }).execute();
+        }
         super.onResume();
     }
 }

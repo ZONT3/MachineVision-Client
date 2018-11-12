@@ -130,7 +130,7 @@ public class EditActivity extends AppCompatActivity {
                         "{\"request_code\":\"reqimg\"," +
                         "\"query\":\""+query+"\"," +
                         "\"rtcount\":\""+DEFAULT_RTCOUNT+"\"}"
-                ), MetadataAnswer.class).metadata;
+                ), MetadataResponse.class).metadata;
             } catch (IOException e) {
                 e.printStackTrace();
                 this.e = e;
@@ -243,7 +243,7 @@ public class EditActivity extends AppCompatActivity {
                                 "\"rtcount\":\"%d\","+
                                 "\"offset\":\"%d\"}",
                         query, rtcount, offset)
-                ), MetadataAnswer.class).metadata;
+                ), MetadataResponse.class).metadata;
             } catch (IOException e) {
                 e.printStackTrace();
                 this.e = e;
@@ -313,8 +313,8 @@ public class EditActivity extends AppCompatActivity {
                 HashMap<String, Object> hashMap = new HashMap<>();
                 hashMap.put("request_code", "new_object");
                 hashMap.put("artifact_object", object);
-                Log.d("DEBUG", new Gson().toJson(hashMap));
                 String result = Client.sendJsonForResult(new Gson().toJson(hashMap));
+                if (!result.equals("success")) throw new IOException("Unexpected response: "+result);
             } catch (IOException e) {
                 e.printStackTrace();
                 this.e = e;
@@ -370,8 +370,8 @@ public class EditActivity extends AppCompatActivity {
     }
 
     @SuppressWarnings("unused")
-    private static class MetadataAnswer {
-        private String answerCode;
+    private static class MetadataResponse {
+        private String response_code;
         private HashMap<String, String>[] metadata;
     }
 

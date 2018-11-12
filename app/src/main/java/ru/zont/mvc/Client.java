@@ -18,7 +18,12 @@ class Client {
     private static String ip;
     private static int port;
 
-    static void establish(String ip, int port) throws IOException {
+    static void setup(String ip, int port) {
+        Client.ip = ip;
+        Client.port = port;
+    }
+
+    static void establish() throws IOException {
         connect(ip, port);
         disconnect();
     }
@@ -42,7 +47,7 @@ class Client {
 
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         String answer = in.readLine();
-        if (answer==null || answer.equals("")) throw new IOException("Incorrect answer from server");
+        if (answer==null || answer.equals("")) throw new IOException("Incorrect response" + (answer == null ? ": null" : ": blank line"));
         Log.d("CLIENT", "Answer:\n\t"+answer);
         disconnect();
         return answer;

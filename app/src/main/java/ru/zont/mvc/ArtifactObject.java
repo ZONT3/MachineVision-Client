@@ -53,4 +53,10 @@ class ArtifactObject implements Serializable {
     public String toString() {
         return title;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ArtifactObject) return ((ArtifactObject)obj).id.equals(id);
+        else return super.equals(obj);
+    }
 }
