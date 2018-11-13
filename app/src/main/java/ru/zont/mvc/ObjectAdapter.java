@@ -76,12 +76,11 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
     void updateDataset(ArtifactObject[] newDataset) {
         ArrayList<ArtifactObject> tempDataset = new ArrayList<>();
         Collections.addAll(tempDataset, newDataset);
-        ArrayList<ArtifactObject> added = new ArrayList<>();
-        ArrayList<ArtifactObject> removed = new ArrayList<>();
         for (ArtifactObject obj : tempDataset) {
             if (!mDataset.contains(obj)) {
                 mDataset.add(obj);
                 notifyItemInserted(mDataset.indexOf(obj));
+                notifyItemRangeChanged(mDataset.indexOf(obj), mDataset.size());
             }
         }
         for (ArtifactObject obj : mDataset) {
@@ -89,9 +88,9 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
                 int pos = mDataset.indexOf(obj);
                 mDataset.remove(obj);
                 notifyItemRemoved(pos);
-                notifyItemRangeChanged(mDataset.indexOf(obj), pos);
+                notifyItemRangeChanged(pos, mDataset.size());
             }
-        }
+        } // TODO compare last instances of lists
     }
 
 }

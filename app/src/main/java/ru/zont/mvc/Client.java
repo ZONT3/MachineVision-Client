@@ -11,7 +11,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 class Client {
-    private static final int TIMEOUT = 60000;
+    static final int TIMEOUT = 30000;
     private static Socket socket;
     private static boolean connected = false;
 
@@ -30,7 +30,6 @@ class Client {
 
     private static void connect(String ip, int port) throws IOException {
         socket = new Socket(ip, port);
-        socket.setSoTimeout(TIMEOUT);
         connected = true;
 
         Client.ip = ip;
@@ -38,9 +37,14 @@ class Client {
     }
 
     static String sendJsonForResult(String json) throws IOException {
+        return sendJsonForResult(json, TIMEOUT);
+    }
+
+    static String sendJsonForResult(String json, int timeout) throws IOException {
         connect(ip, port);
         if (socket==null) throw new IOException("Socket is null");
         if (!connected) throw new IOException("Client is not connected!");
+        socket.setSoTimeout(timeout);
 
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         out.println(json);

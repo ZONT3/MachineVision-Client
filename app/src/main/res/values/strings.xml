@@ -19,4 +19,5 @@
     <string name="yes">Yes</string>
     <string name="edit_setrtc">Count to get</string>
     <string name="main_restart">RESTART APP</string>
+    <string name="edit_title">Title</string>
 </resources>

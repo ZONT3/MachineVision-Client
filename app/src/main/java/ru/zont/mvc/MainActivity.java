@@ -27,22 +27,24 @@ import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Toolbar toolbar;
     private ProgressBar main_pb;
     private RecyclerView recyclerView;
     private WeakReference<MainActivity> wr;
     private String ip;
     boolean idle = false;
+    private ImageView svst;
+    private boolean listGettingFail = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        toolbar = findViewById(R.id.main_toolbar);
+        Toolbar toolbar = findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
 
         ip = getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).getString("svip", "dltngz.ddns.net");
         main_pb = findViewById(R.id.main_pb);
+        svst = findViewById(R.id.main_svst);
         wr = new WeakReference<>(this);
 
         recyclerView = findViewById(R.id.main_recycler);
@@ -60,13 +62,13 @@ public class MainActivity extends AppCompatActivity {
                     act = wr.get();
                     if (act.idle) {
                         try {
-                            Client.establish();
+                            Client.establish();                                                     //FIXME Debug, why that thread sometimes works incorrect
                             b = true;
+                            if (listGettingFail) getList();
                         } catch (IOException e) {
                             System.out.println(e.getMessage());
                         }
-                        ((ImageView)act.findViewById(R.id.main_svst))
-                                .setImageResource(b
+                        svst.setImageResource(b
                                         ? android.R.drawable.presence_online
                                         : android.R.drawable.presence_offline);
                     }
@@ -117,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
             void onPostExecute(ArtifactObject[] objects, Exception e);
         }
 
+        @SuppressWarnings("unused")
         static class ListResponse {
             private String response_code;
             private ArtifactObject[] objects;
@@ -169,19 +172,28 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        getList();
+        super.onResume();
+    }
+
+    private void getList() {
+        idle = true;
         main_pb.setVisibility(View.VISIBLE);
         new ListGetter(new ListGetter.OnPostExecute() {
             @Override
             public void onPostExecute(ArtifactObject[] objects, Exception e) {
                 if (e != null || objects == null) {
                     Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
-                    toolbar.setTitle(R.string.main_restart);
-                } else ((ObjectAdapter) recyclerView.getAdapter()).updateDataset(objects);
+                    listGettingFail = true;
+                } else {
+                    ((ObjectAdapter) recyclerView.getAdapter()).updateDataset(objects);
+                    svst.setImageResource(android.R.drawable.presence_online);
+                    listGettingFail = false;
+                }
 
                 main_pb.setVisibility(View.GONE);
                 idle = true;
             }
         }).execute();
-        super.onResume();
     }
 }

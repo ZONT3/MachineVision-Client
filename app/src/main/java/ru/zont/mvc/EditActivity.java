@@ -1,6 +1,5 @@
 package ru.zont.mvc;
 
-import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -96,108 +95,105 @@ public class EditActivity extends AppCompatActivity {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        new NewQuery(EditActivity.this, et.getText().toString()).execute();
+                        pb.setVisibility(View.VISIBLE);
+                        new GetImages(et.getText().toString(),
+                                DEFAULT_RTCOUNT, -1,
+                                new GetImages.OnPostExecute() {
+                                    @Override
+                                    public void onPostExecute(ArrayList<String> strings, String query, int rtcount, int offset, Exception e) {
+                                        if (strings == null) {
+                                            finish();
+                                            Toast.makeText(EditActivity.this, e == null ? "Unknown error while getting thumbnails" : e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            return;
+                                        }
+
+                                        if (strings.size() > 0) {
+                                            addQuery(new WeakReference<>(EditActivity.this), strings, query, DEFAULT_RTCOUNT);
+                                            edited = true;
+                                        } else Toast.makeText(EditActivity.this, R.string.edit_nores, Toast.LENGTH_LONG).show();
+                                        pb.setVisibility(View.GONE);
+                                    }
+                                });
                     }
                 }).create().show();
 
     }
 
-    private static class NewQuery extends AsyncTask<Void, Void, ArrayList<String>> {
-        private WeakReference<EditActivity> ea;
-        private String query;
-
-        private IOException e;
-
-        private int DEFAULT_RTCOUNT;
-
-        NewQuery(EditActivity ea, String q) {
-            this.ea = new WeakReference<>(ea);
-            query = q;
-            DEFAULT_RTCOUNT = ea.DEFAULT_RTCOUNT;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            ea.get().pb.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected ArrayList<String> doInBackground(Void... voids) {
-            HashMap<String, String>[] list;
-            try {
-                list = new Gson().fromJson(Client.sendJsonForResult(
-                        "{\"request_code\":\"reqimg\"," +
-                        "\"query\":\""+query+"\"," +
-                        "\"rtcount\":\""+DEFAULT_RTCOUNT+"\"}"
-                ), MetadataResponse.class).metadata;
-            } catch (IOException e) {
-                e.printStackTrace();
-                this.e = e;
-                return null;
-            }
-            ArrayList<String> urls = new ArrayList<>();
-            for (HashMap<String, String> ent : list) {
-                if (ent.get("image_link")!=null) urls.add(ent.get("image_link"));
-            }
-            return urls;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<String> strings) {
-            if (strings == null) {
-                ea.get().finish();
-                Toast.makeText(ea.get(), e == null ? "Unknown error while getting thumbnails" : e.getMessage(), Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (strings.size() > 0) {
-                addQuery(ea, strings, query, DEFAULT_RTCOUNT);
-                ea.get().edited = true;
-            } else Toast.makeText(ea.get(), R.string.edit_nores, Toast.LENGTH_LONG).show();
-            ea.get().pb.setVisibility(View.GONE);
-        }
-    }
-
     private static void addQuery(final WeakReference<EditActivity> ea, ArrayList<String> strings, final String query, final int DEFAULT_RTCOUNT) {
-        LinearLayout linearLayout = ea.get().findViewById(R.id.edit_list);
-        View frag = LayoutInflater.from(ea.get()).inflate(R.layout.fragment_query, linearLayout, false);
+        final EditActivity activity = ea.get();
+        LinearLayout linearLayout = activity.findViewById(R.id.edit_list);
+        View frag = LayoutInflater.from(activity).inflate(R.layout.fragment_query, linearLayout, false);
         TextView tw = frag.findViewById(R.id.query_title);
         tw.setText(query);
 
-        int spans = Dimension.toDp(ea.get().getResources().getDisplayMetrics().widthPixels, ea.get()) / 100;
-        final RecyclerView rw = frag.findViewById(R.id.query_recycler);
-        rw.setLayoutManager(new GridLayoutManager(ea.get(), spans) /*{
+        int spans = Dimension.toDp(activity.getResources().getDisplayMetrics().widthPixels, activity) / 100;
+        final RecyclerView rv = frag.findViewById(R.id.query_recycler);
+        rv.setLayoutManager(new GridLayoutManager(activity, spans) {
+
             @Override
             public boolean canScrollVertically() { return false; }
-        }*/);
-        rw.setAdapter(new EditThumbAdapter(strings, new Runnable() {
+        });
+        rv.setAdapter(new EditThumbAdapter(strings, new Runnable() {
             @Override
             public void run() {
-                ea.get().edited = true;
+                activity.edited = true;
             }
         }));
-        ((EditThumbAdapter)rw.getAdapter()).mOffset += DEFAULT_RTCOUNT;
+        ((EditThumbAdapter)rv.getAdapter()).mOffset += DEFAULT_RTCOUNT;
 
         Button more = frag.findViewById(R.id.query_more);
         more.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new GetMore(new WeakReference<>(rw), ea, query, DEFAULT_RTCOUNT).execute();
+                activity.pb.setVisibility(View.VISIBLE);
+                new GetImages(query, DEFAULT_RTCOUNT,
+                        ((EditThumbAdapter) rv.getAdapter()).mOffset,
+                        new GetImages.OnPostExecute() {
+                            @Override
+                            public void onPostExecute(ArrayList<String> strings, String query, int rtcount, int offset, Exception e) {
+                                if (strings == null) {
+                                    activity.finish();
+                                    Toast.makeText(activity, e == null ? "Error while getting thumbnails" : e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                EditThumbAdapter eta = (EditThumbAdapter) rv.getAdapter();
+                                eta.add(strings);
+                                eta.mOffset += rtcount;
+                                activity.pb.setVisibility(View.GONE);
+                            }
+                        });
             }
         });
         more.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                final EditText et = new EditText(ea.get());
+                final EditText et = new EditText(activity);
                 et.setInputType(InputType.TYPE_CLASS_NUMBER);
                 et.setText("5");
-                new AlertDialog.Builder(ea.get())
+                new AlertDialog.Builder(activity)
                         .setTitle(R.string.edit_setrtc)
                         .setView(et)
                         .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                new GetMore(new WeakReference<>(rw), ea, query, Integer.valueOf(et.getText().toString())).execute();
+                                activity.pb.setVisibility(View.VISIBLE);
+                                new GetImages(query,
+                                        Integer.valueOf(et.getText().toString()),
+                                        ((EditThumbAdapter) rv.getAdapter()).mOffset,
+                                        new GetImages.OnPostExecute() {
+                                            @Override
+                                            public void onPostExecute(ArrayList<String> strings, String query, int rtcount, int offset, Exception e) {
+                                                if (strings == null) {
+                                                    activity.finish();
+                                                    Toast.makeText(activity, e == null ? "Error while getting thumbnails" : e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                    return;
+                                                }
+                                                EditThumbAdapter eta = (EditThumbAdapter) rv.getAdapter();
+                                                eta.add(strings);
+                                                eta.mOffset += rtcount;
+                                                activity.pb.setVisibility(View.GONE);
+                                            }
+                                        });
                             }
                         }).create().show();
                 return true;
@@ -205,45 +201,44 @@ public class EditActivity extends AppCompatActivity {
         });
 
         frag.setTag(TAG_QUERY_PREFIX+query);
-        ea.get().queries.add(new ArtifactObject.Query(query));
+        activity.queries.add(new ArtifactObject.Query(query));
         linearLayout.addView(frag, linearLayout.getChildCount() - 1);
     }
 
-    private static class GetMore extends AsyncTask<Void, Void, ArrayList<String>> {
-        private WeakReference<RecyclerView> rv;
-        private WeakReference<EditActivity> ea;
-        private int offset;
+    private static class GetImages extends AsyncTask<Void, Void, ArrayList<String>> {
         private String query;
         private int rtcount;
+        private int offset;
 
-        private IOException e;
+        IOException e;
 
-        private GetMore(WeakReference<RecyclerView> rv, WeakReference<EditActivity> ea, String q, int rtcount) {
-            this.rv = rv;
-            this.ea = ea;
-            query = q;
-            offset = ((EditThumbAdapter)rv.get().getAdapter()).mOffset;
+        private OnPostExecute onPostExecute;
+
+        GetImages(String query, int rtcount, int offset, OnPostExecute onPostExecute) {
+            this.query = query;
             this.rtcount = rtcount;
+            this.offset = offset;
+            this.onPostExecute = onPostExecute;
+
+            execute();
         }
 
-        @Override
-        protected void onPreExecute() {
-            ea.get().pb.setVisibility(View.VISIBLE);
-        }
-
-        @SuppressLint("DefaultLocale")
         @Override
         protected ArrayList<String> doInBackground(Void... voids) {
             HashMap<String, String>[] list;
             try {
-                MetadataResponse response = new Gson().fromJson(Client.sendJsonForResult(String.format(
-                        "{\"request_code\":\"reqimg\"," +
-                                "\"query\":\"%s\"," +
-                                "\"rtcount\":\"%d\"," +
-                                "\"offset\":\"%d\"}",
-                        query, rtcount, offset)
-                ), MetadataResponse.class);
-                if (!response.response_code.equals("query_metadata")) throw new IOException("Invalid response from server.");
+                HashMap<String, String> request = new HashMap<>();
+                request.put("request_code", "reqimg");
+                request.put("query", query+"");
+                request.put("rtcount", rtcount+"");
+                if (offset >= 0) request.put("offset", offset+"");
+                MetadataResponse response =
+                        new Gson().fromJson(
+                                Client.sendJsonForResult(
+                                        new Gson().toJson(request),
+                                        rtcount > 10 ? (int) (rtcount / 10.0 * Client.TIMEOUT) : Client.TIMEOUT),
+                                MetadataResponse.class);
+                if (response.response_code == null || !response.response_code.equals("query_metadata")) throw new IOException("Invalid response from server.");
                 list = response.metadata;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -259,38 +254,12 @@ public class EditActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(ArrayList<String> strings) {
-            if (strings == null) {
-                ea.get().finish();
-                Toast.makeText(rv.get().getContext(), e == null ? "Error while getting thumbnails" : e.getMessage(), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            EditThumbAdapter eta = (EditThumbAdapter) rv.get().getAdapter();
-            eta.add(strings);
-            eta.mOffset += rtcount;
-            ea.get().pb.setVisibility(View.GONE);
-        }
-    }
-
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void save() {
-        Log.d("EditActivity", "Extracting blacklists...");
-        String thumbnail = null;
-        for (ArtifactObject.Query q : queries) {
-            View v = findViewById(R.id.edit_list).findViewWithTag(TAG_QUERY_PREFIX+q.title);
-            if (v == null) {
-                Toast.makeText(this, "Разработчик - долбоеб", Toast.LENGTH_LONG).show();
-                return;
-            }
-            EditThumbAdapter adapter = (EditThumbAdapter)((RecyclerView)v.findViewById(R.id.query_recycler)).getAdapter();
-            q.blacklist = adapter.getBlacklist();
-            if (thumbnail == null) thumbnail = adapter.getThumbUrl();
+            onPostExecute.onPostExecute(strings, query, rtcount, offset, e);
         }
 
-        Log.d("EditActivity", "Generating ArtifactObject...");
-        final ArtifactObject object = new ArtifactObject(objTitle.getText().toString(), queries);
-        object.setThumbnail(thumbnail);
-
-        new SendArtifact(object, this).execute();
+        private interface OnPostExecute {
+            void onPostExecute(ArrayList<String> strings, String query, int rtcount, int offset, Exception e);
+        }
     }
 
     private static class SendArtifact extends AsyncTask<Void, Void, Void> {
@@ -336,22 +305,42 @@ public class EditActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
             return;
         }
-        save();
+
+        Log.d("EditActivity", "Extracting blacklists...");
+        String thumbnail = null;
+        for (ArtifactObject.Query q : queries) {
+            View v1 = findViewById(R.id.edit_list).findViewWithTag(TAG_QUERY_PREFIX+q.title);
+            if (v1 == null) {
+                Toast.makeText(this, "Разработчик - долбоеб", Toast.LENGTH_LONG).show();
+                return;
+            }
+            EditThumbAdapter adapter = (EditThumbAdapter)((RecyclerView) v1.findViewById(R.id.query_recycler)).getAdapter();
+            q.blacklist = adapter.getBlacklist();
+            if (thumbnail == null) thumbnail = adapter.getThumbUrl();
+        }
+
+        Log.d("EditActivity", "Generating ArtifactObject...");
+        final ArtifactObject object = new ArtifactObject(objTitle.getText().toString(), queries);
+        object.setThumbnail(thumbnail);
+
+        new SendArtifact(object, this).execute();
     }
+
+    public void onBack(View v) { onBackPressed(); }
 
     @Override
     public void onBackPressed() {
         if (edited) {
-            if (objTitle.getText().toString().equals("")) {
-                Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
-                return;
-            }
-
+            final WeakReference<EditActivity> wr = new WeakReference<>(this);
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(R.string.edit_save)
                     .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+                            if (objTitle.getText().toString().equals("")) {
+                                Toast.makeText(wr.get(), R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
+                                return;
+                            }
                             onSave(null);
                         }})
                     .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
