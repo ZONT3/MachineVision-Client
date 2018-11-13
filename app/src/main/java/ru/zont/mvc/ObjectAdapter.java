@@ -90,7 +90,13 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
                 notifyItemRemoved(pos);
                 notifyItemRangeChanged(pos, mDataset.size());
             }
-        } // TODO compare last instances of lists
+        }
+        for (ArtifactObject obj : mDataset) {
+            if (!obj.dataEquals(tempDataset.get(tempDataset.indexOf(obj)))) {
+                mDataset.set(mDataset.indexOf(obj), tempDataset.get(tempDataset.indexOf(obj)));
+                notifyItemChanged(mDataset.indexOf(obj));
+            }
+        }
     }
 
 }

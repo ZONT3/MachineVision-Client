@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
                     act = wr.get();
                     if (act.idle) {
                         try {
-                            Client.establish();                                                     //FIXME Debug, why that thread sometimes works incorrect
+                            Client.establish();
                             b = true;
                             if (listGettingFail) getList();
                         } catch (IOException e) {
@@ -72,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
                                         ? android.R.drawable.presence_online
                                         : android.R.drawable.presence_offline);
                     }
-                    //Log.d("Checker Thread", "Tick");
+                    Log.d("Checker Thread", "Tick");
                     try { Thread.sleep(3000); } catch (InterruptedException e) { e.printStackTrace(); return; }
                 } while (!act.isFinishing() && !act.isDestroyed());
             }
@@ -156,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
                                 ip = et.getText().toString();
                                 getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).edit()
                                         .putString("svip", et.getText().toString()).apply();
+                                Client.setup(ip, 1337);
                             }
                         }).show();
                 return true;
@@ -177,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getList() {
-        idle = true;
+        idle = false;
         main_pb.setVisibility(View.VISIBLE);
         new ListGetter(new ListGetter.OnPostExecute() {
             @Override

@@ -47,6 +47,12 @@ class ArtifactObject implements Serializable {
 
         String title;
         ArrayList<String> blacklist;
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Query)) return super.equals(obj);
+            return title.equals(((Query) obj).title) && blacklist.equals(((Query) obj).blacklist);
+        }
     }
 
     @Override
@@ -58,5 +64,12 @@ class ArtifactObject implements Serializable {
     public boolean equals(Object obj) {
         if (obj instanceof ArtifactObject) return ((ArtifactObject)obj).id.equals(id);
         else return super.equals(obj);
+    }
+
+    public boolean dataEquals(ArtifactObject object) {
+        return id.equals(object.id) &&
+                title.equals(object.title) &&
+                queries.equals(object.queries) &&
+                thumbnail.equals(object.thumbnail);
     }
 }
