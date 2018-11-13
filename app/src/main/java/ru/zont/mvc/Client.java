@@ -11,7 +11,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 class Client {
-    private static final int TIMEOUT = 30000;
+    private static final int TIMEOUT = 60000;
     private static Socket socket;
     private static boolean connected = false;
 

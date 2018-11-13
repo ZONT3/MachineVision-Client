@@ -37,7 +37,6 @@ public class EditActivity extends AppCompatActivity {
     private boolean edited = false;
 
     private ArrayList<ArtifactObject.Query> queries = new ArrayList<>();
-    private File aoDir;
 
     private ProgressBar pb;
     private EditText objTitle;
@@ -53,7 +52,7 @@ public class EditActivity extends AppCompatActivity {
         pb = findViewById(R.id.edit_pb);
         objTitle = findViewById(R.id.edit_title);
 
-        aoDir = new File(getFilesDir(), AppFields.ARTIFATCOBJ_DIR_NAME);
+        File aoDir = new File(getFilesDir(), AppFields.ARTIFATCOBJ_DIR_NAME);
         if (!aoDir.exists()) aoDir.mkdir();
 
         String id = getIntent().getStringExtra("id");
@@ -237,13 +236,15 @@ public class EditActivity extends AppCompatActivity {
         protected ArrayList<String> doInBackground(Void... voids) {
             HashMap<String, String>[] list;
             try {
-                list = new Gson().fromJson(Client.sendJsonForResult(String.format(
+                MetadataResponse response = new Gson().fromJson(Client.sendJsonForResult(String.format(
                         "{\"request_code\":\"reqimg\"," +
                                 "\"query\":\"%s\"," +
-                                "\"rtcount\":\"%d\","+
+                                "\"rtcount\":\"%d\"," +
                                 "\"offset\":\"%d\"}",
                         query, rtcount, offset)
-                ), MetadataResponse.class).metadata;
+                ), MetadataResponse.class);
+                if (!response.response_code.equals("query_metadata")) throw new IOException("Invalid response from server.");
+                list = response.metadata;
             } catch (IOException e) {
                 e.printStackTrace();
                 this.e = e;
@@ -313,7 +314,7 @@ public class EditActivity extends AppCompatActivity {
                 HashMap<String, Object> hashMap = new HashMap<>();
                 hashMap.put("request_code", "new_object");
                 hashMap.put("artifact_object", object);
-                String result = Client.sendJsonForResult(new Gson().toJson(hashMap));
+                String result = Client.sendJsonForResult(new Gson().newBuilder().setPrettyPrinting().create().toJson(hashMap));
                 if (!result.equals("success")) throw new IOException("Unexpected response: "+result);
             } catch (IOException e) {
                 e.printStackTrace();

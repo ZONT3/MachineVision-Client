@@ -48,45 +48,33 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.main_recycler);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(new ObjectAdapter(new ArtifactObject[]{}));
 
         Client.setup(ip, 1337);
-
-        new ListGetter(new ListGetter.OnPostExecute() {
+        new Thread(new Runnable(){
             @Override
-            public void onPostExecute(ArtifactObject[] objects, Exception e) {
-                if (e != null || objects == null) {
-                    Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
-                    toolbar.setTitle(R.string.main_restart);
-                } else recyclerView.setAdapter(new ObjectAdapter(objects));
-
-                main_pb.setVisibility(View.GONE);
-                idle = true;
-                new Thread(new Runnable(){
-                    @Override
-                    public void run() {
-                        MainActivity act;
-                        do {
-                            boolean b = false;
-                            act = wr.get();
-                            if (act.idle) {
-                                try {
-                                    Client.establish();
-                                    b = true;
-                                } catch (IOException e) {
-                                    System.out.println(e.getMessage());
-                                }
-                                ((ImageView)act.findViewById(R.id.main_svst))
-                                        .setImageResource(b
-                                                ? android.R.drawable.presence_online
-                                                : android.R.drawable.presence_offline);
-                            }
-                            //Log.d("Checker Thread", "Tick");
-                            try { Thread.sleep(3000); } catch (InterruptedException e) { e.printStackTrace(); return; }
-                        } while (!act.isFinishing() && !act.isDestroyed());
+            public void run() {
+                MainActivity act;
+                do {
+                    boolean b = false;
+                    act = wr.get();
+                    if (act.idle) {
+                        try {
+                            Client.establish();
+                            b = true;
+                        } catch (IOException e) {
+                            System.out.println(e.getMessage());
+                        }
+                        ((ImageView)act.findViewById(R.id.main_svst))
+                                .setImageResource(b
+                                        ? android.R.drawable.presence_online
+                                        : android.R.drawable.presence_offline);
                     }
-                }).start();
+                    //Log.d("Checker Thread", "Tick");
+                    try { Thread.sleep(3000); } catch (InterruptedException e) { e.printStackTrace(); return; }
+                } while (!act.isFinishing() && !act.isDestroyed());
             }
-        }).execute();
+        }).start();
     }
 
     private static class ListGetter extends AsyncTask<Void, Void, ArtifactObject[]> {
@@ -113,6 +101,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(ArtifactObject[] objects) {
             if (postExec != null) postExec.onPostExecute(objects, e);
+        }
+
+        @Override
+        protected void onCancelled() {
+            if (postExec != null) postExec.onPostExecute(null, e);
+        }
+
+        @Override
+        protected void onCancelled(ArtifactObject[] artifactObjects) {
+            if (postExec != null) postExec.onPostExecute(null, e);
         }
 
         interface OnPostExecute {
@@ -171,21 +169,19 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        if (recyclerView != null && recyclerView.getAdapter() != null) {
-            main_pb.setVisibility(View.VISIBLE);
-            new ListGetter(new ListGetter.OnPostExecute() {
-                @Override
-                public void onPostExecute(ArtifactObject[] objects, Exception e) {
-                    if (e != null || objects == null) {
-                        Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
-                        toolbar.setTitle(R.string.main_restart);
-                    } else ((ObjectAdapter) recyclerView.getAdapter()).updateDataset(objects);
+        main_pb.setVisibility(View.VISIBLE);
+        new ListGetter(new ListGetter.OnPostExecute() {
+            @Override
+            public void onPostExecute(ArtifactObject[] objects, Exception e) {
+                if (e != null || objects == null) {
+                    Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
+                    toolbar.setTitle(R.string.main_restart);
+                } else ((ObjectAdapter) recyclerView.getAdapter()).updateDataset(objects);
 
-                    main_pb.setVisibility(View.GONE);
-                    idle = true;
-                }
-            }).execute();
-        }
+                main_pb.setVisibility(View.GONE);
+                idle = true;
+            }
+        }).execute();
         super.onResume();
     }
 }
