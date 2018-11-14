@@ -20,4 +20,13 @@
     <string name="edit_setrtc">Count to get</string>
     <string name="main_restart">RESTART APP</string>
     <string name="edit_title">Title</string>
+    <string name="artobj_status_undefined">UNDEFINED</string>
+    <string name="artobj_status_rtl">Ready to learn</string>
+    <string name="artobj_status_dl">Downloading imgs</string>
+    <string name="artobj_status_lrn">Learning</string>
+    <string name="artobj_status_rfu">Ready</string>
+    <string name="artobj_status_odt">Outdated</string>
+    <string name="artobj_status_errl">Learning error</string>
+    <string name="artobj_status_err">Error</string>
+    <string name="artobj_modified">Modified %s</string>
 </resources>

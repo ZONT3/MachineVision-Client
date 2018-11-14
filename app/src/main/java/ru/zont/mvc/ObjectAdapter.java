@@ -1,6 +1,7 @@
 package ru.zont.mvc;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -11,10 +12,20 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 
 public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder> {
+    static final int STATUS_ERROR = -99;
+    static final int STATUS_ERROR_LEARN = -1;
+    static final int STATUS_READY_TL = 0;
+    static final int STATUS_DOWNLOADING = 1;
+    static final int STATUS_LEARNING = 2;
+    static final int STATUS_READY_FU = 3;
+    static final int STATUS_OUTDATED = 4;
+
     private ArrayList<ArtifactObject> mDataset;
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -61,6 +72,26 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
                 object.getTotalBlacklisted() > 0
                         ? ", " + object.getTotalBlacklisted() + " blacklisted"
                         : ""));
+
+        Context context = holder.mThumb.getContext();
+        String status = context.getString(R.string.artobj_status_undefined);
+        switch (object.getStatus()) {
+            case STATUS_READY_TL: status = context.getString(R.string.artobj_status_rtl); break;
+            case STATUS_DOWNLOADING: status = context.getString(R.string.artobj_status_dl); break;
+            case STATUS_LEARNING: status = context.getString(R.string.artobj_status_lrn); break;
+            case STATUS_READY_FU: status = context.getString(R.string.artobj_status_rfu); break;
+            case STATUS_OUTDATED: status = context.getString(R.string.artobj_status_odt); break;
+            case STATUS_ERROR_LEARN: status = context.getString(R.string.artobj_status_errl); break;
+            case STATUS_ERROR: status = context.getString(R.string.artobj_status_err); break;
+        }
+        holder.mStatus.setText(status);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(object.getModified());
+        DateFormat format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
+        if (calendar.get(Calendar.DAY_OF_YEAR)*calendar.get(Calendar.YEAR) == Calendar.getInstance().get(Calendar.DAY_OF_YEAR)*Calendar.getInstance().get(Calendar.YEAR))
+            format = DateFormat.getTimeInstance(DateFormat.SHORT);
+        holder.mLastact.setText(context.getString(R.string.artobj_modified, format.format(calendar.getTime())));
 
         if (object.getThumbnail() != null)
             Glide.with(holder.mThumb)

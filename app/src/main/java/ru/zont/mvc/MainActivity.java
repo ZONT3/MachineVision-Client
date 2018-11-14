@@ -11,7 +11,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -57,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable(){
             @Override
             public void run() {
+                Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
                 MainActivity act;
                 do {
                     boolean b = false;
@@ -65,7 +65,10 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             Client.establish();
                             b = true;
-                            if (listGettingFail) getList();
+                            if (listGettingFail) {
+                                getList();
+                                listGettingFail = false;
+                            }
                         } catch (IOException e) {
                             System.out.println(e.getMessage());
                         }
@@ -73,20 +76,25 @@ public class MainActivity extends AppCompatActivity {
                                         ? android.R.drawable.presence_online
                                         : android.R.drawable.presence_offline);
                     }
-                    Log.d("Checker Thread", "Tick");
-                    try { Thread.sleep(3000); } catch (InterruptedException e) { e.printStackTrace(); return; }
+                    //Log.d("Checker Thread", "Tick");
+                    try { Thread.sleep(1500); } catch (InterruptedException e) { e.printStackTrace(); return; }
                 } while (!act.isFinishing() && !act.isDestroyed());
             }
         }).start();
     }
 
     private static class ListGetter extends AsyncTask<Void, Void, ArtifactObject[]> {
-        private OnPostExecute postExec;
-        private ListGetter(@Nullable OnPostExecute postExec) {
-            this.postExec = postExec;
+        private AsyncRunnable runnable;
+        private ListGetter(@Nullable AsyncRunnable runnable) {
+            this.runnable = runnable;
         }
 
         private Exception e;
+
+        @Override
+        protected void onPreExecute() {
+            runnable.onPreExecute();
+        }
 
         @Override
         protected ArtifactObject[] doInBackground(Void... voids) {
@@ -103,20 +111,21 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(ArtifactObject[] objects) {
-            if (postExec != null) postExec.onPostExecute(objects, e);
+            if (runnable != null) runnable.onPostExecute(objects, e);
         }
 
         @Override
         protected void onCancelled() {
-            if (postExec != null) postExec.onPostExecute(null, e);
+            if (runnable != null) runnable.onPostExecute(null, e);
         }
 
         @Override
         protected void onCancelled(ArtifactObject[] artifactObjects) {
-            if (postExec != null) postExec.onPostExecute(null, e);
+            if (runnable != null) runnable.onPostExecute(null, e);
         }
 
-        interface OnPostExecute {
+        interface AsyncRunnable {
+            void onPreExecute();
             void onPostExecute(ArtifactObject[] objects, Exception e);
         }
 
@@ -180,22 +189,31 @@ public class MainActivity extends AppCompatActivity {
 
     private void getList() {
         idle = false;
-        main_pb.setVisibility(View.VISIBLE);
-        new ListGetter(new ListGetter.OnPostExecute() {
+        runOnUiThread(new Runnable() {
             @Override
-            public void onPostExecute(ArtifactObject[] objects, Exception e) {
-                if (e != null || objects == null) {
-                    Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
-                    listGettingFail = true;
-                } else {
-                    ((ObjectAdapter) recyclerView.getAdapter()).updateDataset(objects);
-                    svst.setImageResource(android.R.drawable.presence_online);
-                    listGettingFail = false;
-                }
+            public void run() {
+                new ListGetter(new ListGetter.AsyncRunnable() {
+                    @Override
+                    public void onPreExecute() {
+                        main_pb.setVisibility(View.VISIBLE);
+                    }
 
-                main_pb.setVisibility(View.GONE);
-                idle = true;
+                    @Override
+                    public void onPostExecute(ArtifactObject[] objects, Exception e) {
+                        if (e != null || objects == null) {
+                            Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
+                            listGettingFail = true;
+                        } else {
+                            ((ObjectAdapter) recyclerView.getAdapter()).updateDataset(objects);
+                            svst.setImageResource(android.R.drawable.presence_online);
+                            listGettingFail = false;
+                        }
+
+                        main_pb.setVisibility(View.GONE);
+                        idle = true;
+                    }
+                }).execute();
             }
-        }).execute();
+        });
     }
 }

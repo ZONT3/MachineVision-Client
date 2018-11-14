@@ -1,21 +1,25 @@
 package ru.zont.mvc;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
 class ArtifactObject implements Serializable {
-    final String id = new RandomString(16, new Random()).nextString();;
+    final String id = new RandomString(16, new Random()).nextString();
 
     private String title;
     private ArrayList<Query> queries;
     private String thumbnail;
+    private int status;
+    private long modified;
+
     //private ArrayList<File> customImages;
 
     ArtifactObject(String title, ArrayList<Query> queries/*, ArrayList<File> customImages*/) {
         this.title = title;
         this.queries = queries;
+        status = ObjectAdapter.STATUS_READY_TL;
+        modified = System.currentTimeMillis();
         //this.customImages = customImages;
     }
 
@@ -37,7 +41,11 @@ class ArtifactObject implements Serializable {
 
     void setThumbnail(String thumbnail) { this.thumbnail = thumbnail; }
 
-    public String getThumbnail() { return thumbnail; }
+    String getThumbnail() { return thumbnail; }
+
+    int getStatus() { return status; }
+
+    long getModified() { return modified; }
 
     static class Query implements Serializable {
         Query(String title) {
@@ -66,7 +74,7 @@ class ArtifactObject implements Serializable {
         else return super.equals(obj);
     }
 
-    public boolean dataEquals(ArtifactObject object) {
+    boolean dataEquals(ArtifactObject object) {
         return id.equals(object.id) &&
                 title.equals(object.title) &&
                 queries.equals(object.queries) &&
