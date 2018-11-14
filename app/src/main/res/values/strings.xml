@@ -31,4 +31,5 @@
     <string name="artobj_modified">Modified %s</string>
     <string name="query_deletediag">Are You sure?</string>
     <string name="query_alrex">Such query already exists</string>
+    <string name="edit_thumb_set">This image was set as a thumbnail</string>
 </resources>

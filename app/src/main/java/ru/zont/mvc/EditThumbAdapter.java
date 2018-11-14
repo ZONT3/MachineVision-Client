@@ -1,5 +1,7 @@
 package ru.zont.mvc;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
@@ -8,17 +10,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> {
     static class VH extends RecyclerView.ViewHolder {
+        View root;
         ImageView thumb;
         ImageButton del;
         VH(View itemView) {
             super(itemView);
+            root = itemView;
             thumb = itemView.findViewById(R.id.query_item_thumb);
             del = itemView.findViewById(R.id.query_item_del);
         }
@@ -29,13 +35,15 @@ public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> 
     private String thumbUrl;
 
     private Runnable onEdit;
+    private WeakReference<EditActivity> wr;
 
     int mOffset = 0;
 
-    EditThumbAdapter(ArrayList<String> urls, Runnable onEdit) {
+    EditThumbAdapter(ArrayList<String> urls, Runnable onEdit, EditActivity activity) {
         whitelist = urls;
         blacklist = new ArrayList<>();
         this.onEdit = onEdit;
+        wr = new WeakReference<>(activity);
 
         if (urls.size() > 0) thumbUrl = urls.get(0);
     }
@@ -50,11 +58,28 @@ public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> 
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
+        final String url = whitelist.get(position);
         Glide.with(holder.itemView.getContext())
-                .load(whitelist.get(position))
+                .load(url)
                 //.apply(new RequestOptions().override(84))
                 .into(holder.thumb);
         holder.del.setOnClickListener(new DeleteListener(position));
+        holder.root.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                wr.get().startActivity(
+                        new Intent(Intent.ACTION_VIEW)
+                                .setDataAndType(Uri.parse(url), "image/*"));
+            }
+        });
+        holder.root.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                wr.get().setThumbnail(url);
+                Toast.makeText(v.getContext(), R.string.edit_thumb_set, Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
     }
 
     public void add(ArrayList<String> list) {

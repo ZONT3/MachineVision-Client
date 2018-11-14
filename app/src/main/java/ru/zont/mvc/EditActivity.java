@@ -39,6 +39,7 @@ public class EditActivity extends AppCompatActivity {
 
     private ProgressBar pb;
     private EditText objTitle;
+    private String thumbnail;
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
@@ -145,7 +146,7 @@ public class EditActivity extends AppCompatActivity {
             public void run() {
                 activity.edited = true;
             }
-        }));
+        }, ea.get()));
         ((EditThumbAdapter)rv.getAdapter()).mOffset += DEFAULT_RTCOUNT;
 
         Button more = frag.findViewById(R.id.query_more);
@@ -233,10 +234,10 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private static class GetImages extends AsyncTask<Void, Void, ArrayList<String>> {
+
         private String query;
         private int rtcount;
         private int offset;
-
         IOException e;
 
         private OnPostExecute onPostExecute;
@@ -285,20 +286,20 @@ public class EditActivity extends AppCompatActivity {
         }
 
         private interface OnPostExecute {
+
             void onPostExecute(ArrayList<String> strings, String query, int rtcount, int offset, Exception e);
         }
     }
-
     private static class SendArtifact extends AsyncTask<Void, Void, Void> {
-        private Exception e;
 
+        private Exception e;
         private ArtifactObject object;
+
         private WeakReference<EditActivity> wr;
         private SendArtifact(ArtifactObject object, EditActivity activity) {
             this.object = object;
             wr = new WeakReference<>(activity);
         }
-
         @Override
         protected void onPreExecute() {
             wr.get().pb.setVisibility(View.VISIBLE);
@@ -325,8 +326,8 @@ public class EditActivity extends AppCompatActivity {
             else Toast.makeText(wr.get(), R.string.edit_saved, Toast.LENGTH_SHORT).show();
             wr.get().finish();
         }
-    }
 
+    }
     public void onSave(View v) {
         if (objTitle.getText().toString().equals("")) {
             Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
@@ -334,7 +335,6 @@ public class EditActivity extends AppCompatActivity {
         }
 
         Log.d("EditActivity", "Extracting blacklists...");
-        String thumbnail = null;
         for (ArtifactObject.Query q : queries) {
             View v1 = findViewById(R.id.edit_list).findViewWithTag(TAG_QUERY_PREFIX+q.title);
             if (v1 == null) {
@@ -380,16 +380,18 @@ public class EditActivity extends AppCompatActivity {
         } else super.onBackPressed();
     }
 
+    public void setThumbnail(String url) { thumbnail = url; }
+
     private int getDefaultRtcount() {
         int count = Dimension.toDp(getResources().getDisplayMetrics().widthPixels, this) / 100;
         if (count <= 4) count *= 2;
         return count;
     }
-
     @SuppressWarnings("unused")
     private static class MetadataResponse {
+
         private String response_code;
         private HashMap<String, String>[] metadata;
-    }
 
+    }
 }
