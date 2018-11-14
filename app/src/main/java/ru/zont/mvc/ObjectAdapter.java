@@ -67,10 +67,10 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ArtifactObject object = mDataset.get(position);
         holder.mTitle.setText(object.getTitle());
-        holder.mMeta.setText(String.format("%d Queries%s",
+        holder.mMeta.setText(String.format(holder.mThumb.getContext().getString(R.string.main_obj_meta),
                 object.getQueriesSize(),
                 object.getTotalBlacklisted() > 0
-                        ? ", " + object.getTotalBlacklisted() + " blacklisted"
+                        ? ", " + holder.mThumb.getContext().getString(R.string.main_obj_bl, object.getTotalBlacklisted())
                         : ""));
 
         Context context = holder.mThumb.getContext();

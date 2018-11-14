@@ -32,4 +32,6 @@
     <string name="query_deletediag">Are You sure?</string>
     <string name="query_alrex">Such query already exists</string>
     <string name="edit_thumb_set">This image was set as a thumbnail</string>
+    <string name="main_obj_meta">%d Queries%s</string>
+    <string name="main_obj_bl">%d Blacklisted</string>
 </resources>

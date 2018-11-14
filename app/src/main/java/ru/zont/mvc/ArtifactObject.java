@@ -78,6 +78,8 @@ class ArtifactObject implements Serializable {
         return id.equals(object.id) &&
                 title.equals(object.title) &&
                 queries.equals(object.queries) &&
-                thumbnail.equals(object.thumbnail);
+                thumbnail.equals(object.thumbnail) &&
+                status == object.status &&
+                modified == object.modified;
     }
 }
