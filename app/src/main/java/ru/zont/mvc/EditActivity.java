@@ -95,6 +95,13 @@ public class EditActivity extends AppCompatActivity {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        for (ArtifactObject.Query q : queries) {
+                            if (q.title.equals(et.getText().toString())) {
+                                Toast.makeText(EditActivity.this, R.string.query_alrex, Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                        }
+
                         pb.setVisibility(View.VISIBLE);
                         new GetImages(et.getText().toString(),
                                 DEFAULT_RTCOUNT, -1,
@@ -121,8 +128,8 @@ public class EditActivity extends AppCompatActivity {
 
     private static void addQuery(final WeakReference<EditActivity> ea, ArrayList<String> strings, final String query, final int DEFAULT_RTCOUNT) {
         final EditActivity activity = ea.get();
-        LinearLayout linearLayout = activity.findViewById(R.id.edit_list);
-        View frag = LayoutInflater.from(activity).inflate(R.layout.fragment_query, linearLayout, false);
+        final LinearLayout linearLayout = activity.findViewById(R.id.edit_list);
+        final View frag = LayoutInflater.from(activity).inflate(R.layout.fragment_query, linearLayout, false);
         TextView tw = frag.findViewById(R.id.query_title);
         tw.setText(query);
 
@@ -197,6 +204,26 @@ public class EditActivity extends AppCompatActivity {
                             }
                         }).create().show();
                 return true;
+            }
+        });
+
+        Button delete = frag.findViewById(R.id.query_delete);
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(v.getContext())
+                        .setTitle(R.string.query_deletediag)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                linearLayout.removeView(frag);
+                                for (ArtifactObject.Query q : activity.queries)
+                                    if (q.title.equals(query))
+                                        activity.queries.remove(q);
+                            }
+                        })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .create().show();
             }
         });
 

@@ -3,7 +3,7 @@
     <string name="app_name_ex">MachineVision</string>
     <string name="title_activity_main2">Main2Activity</string>
     <string name="edit_addqdiag_title">Enter query</string>
-    <string name="edit_addqdiag_hint">Title</string>
+    <string name="edit_addqdiag_hint">Cactus</string>
     <string name="main_error">Connection error</string>
     <string name="main_connecting">Connecting...</string>
     <string name="main_menu_retry" >Retry</string>
@@ -29,4 +29,6 @@
     <string name="artobj_status_errl">Learning error</string>
     <string name="artobj_status_err">Error</string>
     <string name="artobj_modified">Modified %s</string>
+    <string name="query_deletediag">Are You sure?</string>
+    <string name="query_alrex">Such query already exists</string>
 </resources>

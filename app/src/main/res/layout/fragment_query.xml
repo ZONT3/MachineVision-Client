@@ -43,6 +43,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/query_recycler" />
 
+        <Button
+            android:id="@+id/query_delete"
+            style="@android:style/Widget.Material.Button.Borderless"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/baseline_delete_black_36dp"
+            android:clickable="true"
+            android:elevation="0dp"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
     </android.support.constraint.ConstraintLayout>
 
 </android.support.v7.widget.CardView>
