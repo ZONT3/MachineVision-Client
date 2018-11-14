@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -27,8 +28,10 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
     static final int STATUS_OUTDATED = 4;
 
     private ArrayList<ArtifactObject> mDataset;
+    private OnItemClick onItemClick;
 
     static class ViewHolder extends RecyclerView.ViewHolder {
+        View root;
         ImageView mThumb;
         TextView mTitle;
         TextView mMeta;
@@ -37,6 +40,7 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
 
         ViewHolder(View v) {
             super(v);
+            root = v;
             mThumb = v.findViewById(R.id.main_item_thumb);
             mTitle = v.findViewById(R.id.main_item_title);
             mMeta = v.findViewById(R.id.main_item_meta);
@@ -49,9 +53,11 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
 //        mDataset = myDataset;
 //    }
 
-    ObjectAdapter(ArtifactObject[] myDataset) {
+    ObjectAdapter(ArtifactObject[] myDataset, OnItemClick onItemClick) {
         mDataset = new ArrayList<>();
         Collections.addAll(mDataset, myDataset);
+        this.onItemClick = onItemClick;
+        this.onItemClick.wr = new WeakReference<>(this);
     }
 
     @NonNull
@@ -97,6 +103,9 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
             Glide.with(holder.mThumb)
                     .load(object.getThumbnail())
                     .into(holder.mThumb);
+
+        holder.root.setTag(object.id);
+        holder.root.setOnClickListener(onItemClick);
     }
 
     @Override
@@ -128,6 +137,23 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
                 notifyItemChanged(mDataset.indexOf(obj));
             }
         }
+    }
+
+    static abstract class OnItemClick implements View.OnClickListener {
+        private WeakReference<ObjectAdapter> wr;
+
+        @Override
+        public void onClick(View v) {
+            if (wr == null) return;
+            for (ArtifactObject object : wr.get().mDataset) {
+                if (object.id.equals(v.getTag())) {
+                    onItemClick(object, wr.get());
+                    return;
+                }
+            }
+        }
+
+        abstract void onItemClick(ArtifactObject object, ObjectAdapter adapter);
     }
 
 }

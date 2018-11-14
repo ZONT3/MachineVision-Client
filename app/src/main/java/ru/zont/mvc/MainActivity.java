@@ -6,17 +6,21 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -50,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.main_recycler);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(new ObjectAdapter(new ArtifactObject[]{}));
+        recyclerView.setAdapter(new ObjectAdapter(new ArtifactObject[]{}, new OnItemClick()));
 
         Client.setup(ip, 1337);
         new Thread(new Runnable(){
@@ -81,6 +85,25 @@ public class MainActivity extends AppCompatActivity {
                 } while (!act.isFinishing() && !act.isDestroyed());
             }
         }).start();
+    }
+
+    private class OnItemClick extends ObjectAdapter.OnItemClick {
+        @Override
+        void onItemClick(ArtifactObject object, ObjectAdapter adapter) {
+            @SuppressLint("InflateParams")
+            View v = getLayoutInflater().inflate(R.layout.dialog_objectpropts, null);
+            TextView title = v.findViewById(R.id.objpts_title);
+            Switch swith = v.findViewById(R.id.objpts_switch);
+            TextView status = v.findViewById(R.id.objpts_status);
+            TextView queries = v.findViewById(R.id.objpts_queries);
+            TextView total = v.findViewById(R.id.objpts_total);
+            TextView created = v.findViewById(R.id.objpts_created);
+            TextView learned = v.findViewById(R.id.objpts_learned);
+            ConstraintLayout edit = v.findViewById(R.id.objpts_btnlay_edit);
+            ConstraintLayout delete = v.findViewById(R.id.objpts_btnlay_delete);
+
+            //TODO Доделать диалог
+        }
     }
 
     private static class ListGetter extends AsyncTask<Void, Void, ArtifactObject[]> {
