@@ -34,4 +34,12 @@
     <string name="edit_thumb_set">This image was set as a thumbnail</string>
     <string name="main_obj_meta">%d Queries%s</string>
     <string name="main_obj_bl">%d Blacklisted</string>
+    <string name="main_op_status">Status:</string>
+    <string name="main_op_queries">Queries:</string>
+    <string name="main_op_total">Total Images:</string>
+    <string name="main_op_unknown">Unknown</string>
+    <string name="main_op_created">Created:</string>
+    <string name="main_op_learned">Learned:</string>
+    <string name="main_op_edit">Edit</string>
+    <string name="main_op_delete">Delete</string>
 </resources>

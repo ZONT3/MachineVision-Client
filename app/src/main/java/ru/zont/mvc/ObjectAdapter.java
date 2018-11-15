@@ -19,14 +19,6 @@ import java.util.Calendar;
 import java.util.Collections;
 
 public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder> {
-    static final int STATUS_ERROR = -99;
-    static final int STATUS_ERROR_LEARN = -1;
-    static final int STATUS_READY_TL = 0;
-    static final int STATUS_DOWNLOADING = 1;
-    static final int STATUS_LEARNING = 2;
-    static final int STATUS_READY_FU = 3;
-    static final int STATUS_OUTDATED = 4;
-
     private ArrayList<ArtifactObject> mDataset;
     private OnItemClick onItemClick;
 
@@ -80,20 +72,10 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
                         : ""));
 
         Context context = holder.mThumb.getContext();
-        String status = context.getString(R.string.artobj_status_undefined);
-        switch (object.getStatus()) {
-            case STATUS_READY_TL: status = context.getString(R.string.artobj_status_rtl); break;
-            case STATUS_DOWNLOADING: status = context.getString(R.string.artobj_status_dl); break;
-            case STATUS_LEARNING: status = context.getString(R.string.artobj_status_lrn); break;
-            case STATUS_READY_FU: status = context.getString(R.string.artobj_status_rfu); break;
-            case STATUS_OUTDATED: status = context.getString(R.string.artobj_status_odt); break;
-            case STATUS_ERROR_LEARN: status = context.getString(R.string.artobj_status_errl); break;
-            case STATUS_ERROR: status = context.getString(R.string.artobj_status_err); break;
-        }
-        holder.mStatus.setText(status);
+        holder.mStatus.setText(MainActivity.getStatusString(object, context));
 
         Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(object.getModified());
+        calendar.setTimeInMillis(object.getLastAct());
         DateFormat format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
         if (calendar.get(Calendar.DAY_OF_YEAR)*calendar.get(Calendar.YEAR) == Calendar.getInstance().get(Calendar.DAY_OF_YEAR)*Calendar.getInstance().get(Calendar.YEAR))
             format = DateFormat.getTimeInstance(DateFormat.SHORT);

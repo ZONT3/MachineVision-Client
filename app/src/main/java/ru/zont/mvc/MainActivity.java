@@ -1,10 +1,13 @@
 package ru.zont.mvc;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AlertDialog;
@@ -12,7 +15,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +29,8 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.text.DateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
@@ -88,8 +92,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private class OnItemClick extends ObjectAdapter.OnItemClick {
+        @SuppressLint("SetTextI18n")
         @Override
-        void onItemClick(ArtifactObject object, ObjectAdapter adapter) {
+        void onItemClick(final ArtifactObject object, ObjectAdapter adapter) {
             @SuppressLint("InflateParams")
             View v = getLayoutInflater().inflate(R.layout.dialog_objectpropts, null);
             TextView title = v.findViewById(R.id.objpts_title);
@@ -102,8 +107,56 @@ public class MainActivity extends AppCompatActivity {
             ConstraintLayout edit = v.findViewById(R.id.objpts_btnlay_edit);
             ConstraintLayout delete = v.findViewById(R.id.objpts_btnlay_delete);
 
-            //TODO Доделать диалог
+            title.setText(object.getTitle());
+            status.setText(getStatusString(object, MainActivity.this));
+            queries.setText(object.getQueriesSize()+"");
+            total.setText(object.getTotal() >= 0 ? object.getTotal()+"" : getString(R.string.main_op_unknown));
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(object.getLastAct());
+            created.setText(DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.FULL)
+                    .format(calendar.getTime()));
+
+            String learnedStr = "---";
+            if (object.getLearned() >= 0) {
+                calendar.setTimeInMillis(object.getLearned());
+                learnedStr = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.FULL)
+                        .format(calendar.getTime());
+            }
+            learned.setText(learnedStr);
+
+            edit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(MainActivity.this, EditActivity.class)
+                            .putExtra("object", (Parcelable) object));
+                }
+            });
+            delete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //TODO
+                }
+            });
+
+            new AlertDialog.Builder(MainActivity.this)
+                    .setView(v).create().show();
         }
+    }
+
+    @NonNull
+    static String getStatusString(ArtifactObject object, Context context) {
+        String status = context.getString(R.string.artobj_status_undefined);
+        switch (object.getStatus()) {
+            case ArtifactObject.STATUS.READY_TL: status = context.getString(R.string.artobj_status_rtl); break;
+            case ArtifactObject.STATUS.DOWNLOADING: status = context.getString(R.string.artobj_status_dl); break;
+            case ArtifactObject.STATUS.LEARNING: status = context.getString(R.string.artobj_status_lrn); break;
+            case ArtifactObject.STATUS.READY_FU: status = context.getString(R.string.artobj_status_rfu); break;
+            case ArtifactObject.STATUS.OUTDATED: status = context.getString(R.string.artobj_status_odt); break;
+            case ArtifactObject.STATUS.ERROR_LEARN: status = context.getString(R.string.artobj_status_errl); break;
+            case ArtifactObject.STATUS.ERROR: status = context.getString(R.string.artobj_status_err); break;
+        }
+        return status;
     }
 
     private static class ListGetter extends AsyncTask<Void, Void, ArtifactObject[]> {

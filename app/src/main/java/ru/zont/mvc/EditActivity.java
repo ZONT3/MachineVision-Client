@@ -21,11 +21,10 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class EditActivity extends AppCompatActivity {
@@ -34,7 +33,9 @@ public class EditActivity extends AppCompatActivity {
     private int DEFAULT_RTCOUNT;
 
     private boolean edited = false;
+    private boolean edit = false;
 
+    private ArtifactObject object;
     private ArrayList<ArtifactObject.Query> queries = new ArrayList<>();
 
     private ProgressBar pb;
@@ -43,7 +44,7 @@ public class EditActivity extends AppCompatActivity {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
@@ -55,35 +56,51 @@ public class EditActivity extends AppCompatActivity {
         File aoDir = new File(getFilesDir(), AppFields.ARTIFATCOBJ_DIR_NAME);
         if (!aoDir.exists()) aoDir.mkdir();
 
-        String id = getIntent().getStringExtra("id");
-        if (id == null) edited = true;
-        else {
-            final File file = new File(aoDir, id);
-            final WeakReference<EditActivity> wr = new WeakReference<>(this);
-            if (!file.exists()) {
-                Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show();
-                finish();
-                return;
-            }
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-                        ArtifactObject object = (ArtifactObject) in.readObject();
-                        in.close();
+        object = getIntent().getParcelableExtra("object");
+        if (object != null)  {
+            edit = true;
+            pb.setVisibility(View.VISIBLE);
 
-                        objTitle.setText(object.getTitle());
-                        for (ArtifactObject.Query q : object.getQueries())
-                            addQuery(wr, new ArrayList<String>(), q.title, DEFAULT_RTCOUNT);
-                    } catch (IOException | ClassNotFoundException e) {
-                        e.printStackTrace();
-                        Toast.makeText(wr.get(), e.getMessage(), Toast.LENGTH_LONG).show();
-                        wr.get().finish();
+            queries = object.getQueries();
+            final WeakReference<EditActivity> wr = new WeakReference<>(this);
+            final ArrayList<String[]> thumbnails = new ArrayList<>();
+            if (queries.size() > 0) {
+                new GetImages(queries.get(0).title, DEFAULT_RTCOUNT, -1, new GetImages.OnPostExecute() {
+                    int i = 0;
+
+                    @Override
+                    public void onPostExecute(ArrayList<String> strings, String query, int rtcount, int offset, Exception e) {
+                        if (strings == null || e != null) {
+                            Toast.makeText(wr.get(), e != null ? e.getMessage() : "Unknown error", Toast.LENGTH_LONG).show();
+                            wr.get().finish();
+                            return;
+                        }
+                        for (String s : strings) {
+                            if (queries.get(i).blacklist.contains(s))
+                                strings.remove(s);
+                        }
+                        thumbnails.add((String[]) strings.toArray());
+
+                        i++;
+                        if (i < queries.size()) new GetImages(
+                                queries.get(i).title,
+                                DEFAULT_RTCOUNT,
+                                -1,
+                                this
+                        ).execute();
+                        else {
+                            pb.setVisibility(View.GONE);
+                            for (ArtifactObject.Query q : queries) {
+                                ArrayList<String> tnls = new ArrayList<>();
+                                Collections.addAll(tnls, thumbnails.get(queries.indexOf(q)));
+                                addQuery(wr, tnls, q.title, DEFAULT_RTCOUNT);
+                            }
+                        }
                     }
-                }
-            });
+                }).execute();
+            }
         }
+        if (!edit) edited = true;
     }
 
     public void onClickAddQ(View b) {
@@ -117,6 +134,7 @@ public class EditActivity extends AppCompatActivity {
 
                                         if (strings.size() > 0) {
                                             addQuery(new WeakReference<>(EditActivity.this), strings, query, DEFAULT_RTCOUNT);
+                                            queries.add(new ArtifactObject.Query(query));
                                             edited = true;
                                         } else Toast.makeText(EditActivity.this, R.string.edit_nores, Toast.LENGTH_LONG).show();
                                         pb.setVisibility(View.GONE);
@@ -229,7 +247,6 @@ public class EditActivity extends AppCompatActivity {
         });
 
         frag.setTag(TAG_QUERY_PREFIX+query);
-        activity.queries.add(new ArtifactObject.Query(query));
         linearLayout.addView(frag, linearLayout.getChildCount() - 1);
     }
 
@@ -347,8 +364,10 @@ public class EditActivity extends AppCompatActivity {
         }
 
         Log.d("EditActivity", "Generating ArtifactObject...");
-        final ArtifactObject object = new ArtifactObject(objTitle.getText().toString(), queries);
-        object.setThumbnail(thumbnail);
+        if (object == null) {
+            object = new ArtifactObject(objTitle.getText().toString(), queries);
+            object.setThumbnail(thumbnail);
+        } else object.edit(objTitle.getText().toString(), queries);
 
         new SendArtifact(object, this).execute();
     }
