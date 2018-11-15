@@ -5,4 +5,8 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="AppTheme.Launcher">
+        <item name="android:windowBackground">@drawable/mvc_icon_round</item>
+    </style>
+
 </resources>

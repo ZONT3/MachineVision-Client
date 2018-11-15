@@ -3,15 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="ru.zont.mvc">
 
-    <!--<uses-permission android:name="android.permission.READ_LOGS" />-->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:allowBackup="false"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/mvc_icon"
+        android:roundIcon="@drawable/mvc_icon_round"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning"
