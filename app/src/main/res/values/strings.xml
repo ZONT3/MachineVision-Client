@@ -1,12 +1,8 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="PluralsCandidate">
     <string name="app_name">MVC</string>
     <string name="app_name_ex">MachineVision</string>
-    <string name="title_activity_main2">Main2Activity</string>
     <string name="edit_addqdiag_title">Enter query</string>
     <string name="edit_addqdiag_hint">Cactus</string>
-    <string name="main_error">Connection error</string>
-    <string name="main_connecting">Connecting...</string>
-    <string name="main_menu_retry" >Retry</string>
     <string name="main_menu_chip">Change server IP</string>
     <string name="query_more">Show more</string>
     <string name="edit_deleted">File added to false-list</string>
@@ -18,7 +14,6 @@
     <string name="no">No</string>
     <string name="yes">Yes</string>
     <string name="edit_setrtc">Count to get</string>
-    <string name="main_restart">RESTART APP</string>
     <string name="edit_title">Title</string>
     <string name="artobj_status_undefined">UNDEFINED</string>
     <string name="artobj_status_rtl">Ready to learn</string>
@@ -28,7 +23,7 @@
     <string name="artobj_status_odt">Outdated</string>
     <string name="artobj_status_errl">Learning error</string>
     <string name="artobj_status_err">Error</string>
-    <string name="artobj_modified">Modified %s</string>
+    <string name="artobj_edited">Edited %s</string>
     <string name="query_deletediag">Are You sure?</string>
     <string name="query_alrex">Such query already exists</string>
     <string name="edit_thumb_set">This image was set as a thumbnail</string>
@@ -42,4 +37,18 @@
     <string name="main_op_learned">Learned:</string>
     <string name="main_op_edit">Edit</string>
     <string name="main_op_delete">Delete</string>
+    <string name="blank" />
+    <string name="artobj_learned">Learned %s</string>
+    <string name="artobj_created">Created %s</string>
+    <string name="main_menu_change">Change IP</string>
+    <string name="main_svst">Server State</string>
+    <string name="edit_err_adapter_missing">Error: Missing adapter. Remember changes yourself, then restart app</string>
+    <string name="edit_bartitle">Edit Object</string>
+    <string name="edit_addcust">Add Custom Image</string>
+    <string name="edit_savebutt">Save</string>
+    <string name="edit_upload">Upload Images</string>
+    <string name="back">Back</string>
+    <string name="edit_addq">Add Query</string>
+    <string name="main_obj_thumbnail">Thumbnail</string>
+    <string name="query_item_remove">Remove</string>
 </resources>

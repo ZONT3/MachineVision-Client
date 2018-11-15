@@ -21,7 +21,8 @@
             android:text="Query"
             android:textAppearance="@android:style/TextAppearance.Material.SearchResult.Title"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="HardcodedText" />
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/query_recycler"

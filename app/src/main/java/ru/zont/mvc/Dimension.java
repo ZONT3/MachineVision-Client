@@ -2,6 +2,7 @@ package ru.zont.mvc;
 
 import android.content.Context;
 
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class Dimension {
     public int pxX;
     public int pxY;

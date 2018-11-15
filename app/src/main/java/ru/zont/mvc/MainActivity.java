@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
@@ -18,6 +17,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private WeakReference<MainActivity> wr;
     private String ip;
-    boolean idle = false;
+    private boolean idle = false;
     private ImageView svst;
     private boolean listGettingFail = false;
 
@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(new ObjectAdapter(new ArtifactObject[]{}, new OnItemClick()));
 
-        Client.setup(ip, 1337);
+        Client.setup(ip);
         new Thread(new Runnable(){
             @Override
             public void run() {
@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
     private class OnItemClick extends ObjectAdapter.OnItemClick {
         @SuppressLint("SetTextI18n")
         @Override
-        void onItemClick(final ArtifactObject object, ObjectAdapter adapter) {
+        void onItemClick(final ArtifactObject object) {
             @SuppressLint("InflateParams")
             View v = getLayoutInflater().inflate(R.layout.dialog_objectpropts, null);
             TextView title = v.findViewById(R.id.objpts_title);
@@ -107,40 +107,79 @@ public class MainActivity extends AppCompatActivity {
             ConstraintLayout edit = v.findViewById(R.id.objpts_btnlay_edit);
             ConstraintLayout delete = v.findViewById(R.id.objpts_btnlay_delete);
 
+            boolean available = object.getStatus() != ArtifactObject.STATUS.DOWNLOADING
+                    && object.getStatus() != ArtifactObject.STATUS.LEARNING;
+            edit.setEnabled(available);
+            delete.setEnabled(available);
+            swith.setEnabled(available);
+
             title.setText(object.getTitle());
+            swith.setChecked(object.isEnabled());
             status.setText(getStatusString(object, MainActivity.this));
             queries.setText(object.getQueriesSize()+"");
             total.setText(object.getTotal() >= 0 ? object.getTotal()+"" : getString(R.string.main_op_unknown));
 
             Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(object.getLastAct());
-            created.setText(DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.FULL)
+            calendar.setTimeInMillis(object.getCreated());
+            created.setText(DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
                     .format(calendar.getTime()));
 
             String learnedStr = "---";
             if (object.getLearned() >= 0) {
                 calendar.setTimeInMillis(object.getLearned());
-                learnedStr = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.FULL)
+                learnedStr = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
                         .format(calendar.getTime());
             }
             learned.setText(learnedStr);
+
+            final AlertDialog dialog = new AlertDialog.Builder(MainActivity.this).setView(v).create();
 
             edit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     startActivity(new Intent(MainActivity.this, EditActivity.class)
-                            .putExtra("object", (Parcelable) object));
+                            .putExtra("object", object));
+                    dialog.dismiss();
                 }
             });
             delete.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //TODO
+                    dialog.dismiss();
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            HashMap<String, String> request = new HashMap<>();
+                            request.put("request_code", "delete_object");
+                            request.put("id", object.getId());
+                            try {
+                                Client.sendJsonForResult(new Gson().toJson(request));
+                                getList();
+                            } catch (IOException e) { e.printStackTrace(); }
+                        }
+                    }).start();
+                }
+            });
+            swith.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    object.setEnabled(isChecked);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
+                            HashMap<String, Object> request = new HashMap<>();
+                            request.put("request_code", "new_object");
+                            request.put("artifact_object", object);
+                            try {
+                                Client.sendJsonForResult(new Gson().toJson(request));
+                            } catch (IOException e) { e.printStackTrace(); }
+                        }
+                    }).start();
                 }
             });
 
-            new AlertDialog.Builder(MainActivity.this)
-                    .setView(v).create().show();
+            dialog.show();
         }
     }
 
@@ -159,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
         return status;
     }
 
+    @SuppressWarnings("CanBeFinal")
     private static class ListGetter extends AsyncTask<Void, Void, ArtifactObject[]> {
         private AsyncRunnable runnable;
         private ListGetter(@Nullable AsyncRunnable runnable) {
@@ -216,6 +256,7 @@ public class MainActivity extends AppCompatActivity {
         startActivity( new Intent(MainActivity.this, EditActivity.class).putExtra("new", true) );
     }
 
+    @SuppressWarnings("EmptyMethod")
     @SuppressLint("StaticFieldLeak")
     public void onClickGuess(View v) {
 
@@ -242,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
                                 ip = et.getText().toString();
                                 getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).edit()
                                         .putString("svip", et.getText().toString()).apply();
-                                Client.setup(ip, 1337);
+                                Client.setup(ip);
                             }
                         }).show();
                 return true;
@@ -280,7 +321,16 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
                             listGettingFail = true;
                         } else {
-                            ((ObjectAdapter) recyclerView.getAdapter()).updateDataset(objects);
+                            ObjectAdapter adapter = (ObjectAdapter) recyclerView.getAdapter();
+                            if (adapter == null) {
+                                try { throw new Exception("RecyclerView какого-то хуя не имеет адаптера."); }
+                                catch (Exception e1) {
+                                    e1.printStackTrace();
+                                    finish();
+                                    return;
+                                }
+                            }
+                            adapter.updateDataset(objects);
                             svst.setImageResource(android.R.drawable.presence_online);
                             listGettingFail = false;
                         }

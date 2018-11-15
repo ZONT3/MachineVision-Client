@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 
+@SuppressWarnings("CanBeFinal")
 public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder> {
     private ArrayList<ArtifactObject> mDataset;
     private OnItemClick onItemClick;
@@ -79,14 +80,20 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
         DateFormat format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
         if (calendar.get(Calendar.DAY_OF_YEAR)*calendar.get(Calendar.YEAR) == Calendar.getInstance().get(Calendar.DAY_OF_YEAR)*Calendar.getInstance().get(Calendar.YEAR))
             format = DateFormat.getTimeInstance(DateFormat.SHORT);
-        holder.mLastact.setText(context.getString(R.string.artobj_modified, format.format(calendar.getTime())));
+        int act = R.string.blank;
+        switch (object.getLastActType()) {
+            case ArtifactObject.ACTION.CREATED: act = R.string.artobj_created; break;
+            case ArtifactObject.ACTION.EDITED: act = R.string.artobj_edited; break;
+            case ArtifactObject.ACTION.LEARNED: act = R.string.artobj_learned; break;
+        }
+        holder.mLastact.setText(context.getString(act, format.format(calendar.getTime())));
 
         if (object.getThumbnail() != null)
             Glide.with(holder.mThumb)
                     .load(object.getThumbnail())
                     .into(holder.mThumb);
 
-        holder.root.setTag(object.id);
+        holder.root.setTag(object.getId());
         holder.root.setOnClickListener(onItemClick);
     }
 
@@ -128,14 +135,14 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
         public void onClick(View v) {
             if (wr == null) return;
             for (ArtifactObject object : wr.get().mDataset) {
-                if (object.id.equals(v.getTag())) {
-                    onItemClick(object, wr.get());
+                if (object.getId().equals(v.getTag())) {
+                    onItemClick(object);
                     return;
                 }
             }
         }
 
-        abstract void onItemClick(ArtifactObject object, ObjectAdapter adapter);
+        abstract void onItemClick(ArtifactObject object);
     }
 
 }

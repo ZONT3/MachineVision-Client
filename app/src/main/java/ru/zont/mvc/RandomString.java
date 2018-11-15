@@ -2,6 +2,7 @@ package ru.zont.mvc;
 import java.util.Objects;
 import java.util.Random;
 
+@SuppressWarnings({"WeakerAccess", "SameParameterValue"})
 class RandomString {
 
     /**
@@ -38,6 +39,7 @@ class RandomString {
     /**
      * Create an alphanumeric string generator.
      */
+    @SuppressWarnings("SameParameterValue")
     RandomString(int length, Random random) {
         this(length, random, alphanum);
     }

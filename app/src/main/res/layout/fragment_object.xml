@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clickable="true"
-    android:focusable="auto"
+    android:focusable="true"
     android:foreground="?attr/selectableItemBackgroundBorderless">
 
     <ImageView
@@ -18,7 +18,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/backgrounds/scenic" />
+        tools:srcCompat="@tools:sample/backgrounds/scenic"
+        android:contentDescription="@string/main_obj_thumbnail" />
 
     <TextView
         android:id="@+id/main_item_title"
@@ -30,7 +31,8 @@
         android:textAlignment="textStart"
         android:textAppearance="@android:style/TextAppearance.Material.SearchResult.Title"
         app:layout_constraintStart_toEndOf="@+id/main_item_thumb"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText" />
 
     <TextView
         android:id="@+id/main_item_meta"
@@ -42,7 +44,8 @@
         android:textAlignment="textStart"
         android:textAppearance="@android:style/TextAppearance.Material.Subhead"
         app:layout_constraintStart_toEndOf="@+id/main_item_thumb"
-        app:layout_constraintTop_toBottomOf="@+id/main_item_title" />
+        app:layout_constraintTop_toBottomOf="@+id/main_item_title"
+        tools:ignore="HardcodedText" />
 
     <TextView
         android:id="@+id/main_item_status"
@@ -54,7 +57,8 @@
         android:textAlignment="textEnd"
         android:textAppearance="@android:style/TextAppearance.Material.Small"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText" />
 
     <TextView
         android:id="@+id/main_item_lastact"
@@ -67,10 +71,10 @@
         android:textAlignment="textEnd"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/main_item_meta"
-        app:layout_constraintTop_toBottomOf="@+id/main_item_status" />
+        app:layout_constraintTop_toBottomOf="@+id/main_item_status"
+        tools:ignore="HardcodedText" />
 
     <View
-        android:id="@+id/divider"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:background="?android:attr/listDivider"
@@ -79,7 +83,6 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <View
-        android:id="@+id/divider6"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:background="?android:attr/listDivider"
@@ -88,7 +91,6 @@
         app:layout_constraintStart_toStartOf="@+id/main_item_thumb" />
 
     <View
-        android:id="@+id/divider7"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:background="?android:attr/listDivider"
@@ -97,7 +99,6 @@
         app:layout_constraintTop_toBottomOf="@+id/main_item_thumb" />
 
     <View
-        android:id="@+id/divider8"
         android:layout_width="1dp"
         android:layout_height="0dp"
         android:background="?android:attr/listDivider"
@@ -106,7 +107,6 @@
         app:layout_constraintTop_toTopOf="@+id/main_item_thumb" />
 
     <View
-        android:id="@+id/divider9"
         android:layout_width="1dp"
         android:layout_height="0dp"
         android:background="?android:attr/listDivider"

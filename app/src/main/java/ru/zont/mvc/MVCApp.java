@@ -1,12 +1,8 @@
 package ru.zont.mvc;
 
 import android.app.Application;
-import android.os.Environment;
 
-import java.io.File;
-import java.io.IOException;
-
-@SuppressWarnings("ResultOfMethodCallIgnored")
+@SuppressWarnings({"ResultOfMethodCallIgnored", "WeakerAccess"})
 public class MVCApp extends Application {
 //    public void onCreate() {
 //        super.onCreate();

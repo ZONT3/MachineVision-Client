@@ -1,5 +1,5 @@
 package ru.zont.mvc;
 
-public interface AppFields {
+interface AppFields {
     String ARTIFATCOBJ_DIR_NAME = "artobjs";
 }

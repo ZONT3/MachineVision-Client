@@ -17,8 +17,11 @@ import com.bumptech.glide.Glide;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+@SuppressWarnings("CanBeFinal")
 public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> {
+    @SuppressWarnings("CanBeFinal")
     static class VH extends RecyclerView.ViewHolder {
+        @SuppressWarnings("CanBeFinal")
         View root;
         ImageView thumb;
         ImageButton del;
@@ -89,6 +92,7 @@ public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> 
         invalidateBlacklist();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void add(String url, int position) {
         whitelist.add(position, url);
         notifyItemInserted(position);
@@ -97,6 +101,7 @@ public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> 
         invalidateBlacklist();
     }
 
+    @SuppressWarnings("WeakerAccess")
     String remove(int position) {
         String res = whitelist.remove(position);
         notifyItemRemoved(position);
@@ -105,6 +110,7 @@ public class EditThumbAdapter extends RecyclerView.Adapter<EditThumbAdapter.VH> 
         return res;
     }
 
+    @SuppressWarnings("WeakerAccess")
     String blacklist(int position) {
         String res = remove(position);
         blacklist.add(res);

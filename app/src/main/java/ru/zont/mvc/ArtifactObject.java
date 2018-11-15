@@ -2,14 +2,13 @@ package ru.zont.mvc;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.design.internal.ParcelableSparseArray;
+import android.support.annotation.NonNull;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
-@SuppressWarnings("unchecked")
-class ArtifactObject implements Serializable, Parcelable {
+@SuppressWarnings({"unchecked", "CanBeFinal"})
+public class ArtifactObject implements Parcelable {
     abstract class STATUS {
         static final int ERROR = -99;
         static final int ERROR_LEARN = -1;
@@ -25,7 +24,7 @@ class ArtifactObject implements Serializable, Parcelable {
         static final int LEARNED = 2;
     }
     
-    final String id = new RandomString(16, new Random()).nextString();
+    private String id = new RandomString(16, new Random()).nextString();
 
     private String title;
     private ArrayList<Query> queries;
@@ -65,6 +64,15 @@ class ArtifactObject implements Serializable, Parcelable {
         return res;
     }
 
+    ArrayList<String> getBlacklist() {
+        ArrayList<String> res = new ArrayList<>();
+        for (Query q : queries)
+            res.addAll(q.blacklist);
+        return res;
+    }
+
+    String getId() { return id; }
+
     String getTitle() { return title; }
 
     ArrayList<Query> getQueries() { return queries; }
@@ -97,7 +105,7 @@ class ArtifactObject implements Serializable, Parcelable {
         if (learned >= 0) status = STATUS.OUTDATED;
     }
 
-    static class Query implements Serializable, Parcelable {
+    public static class Query implements Parcelable {
         Query(String title) {
             this.title = title;
             blacklist = new ArrayList<>();
@@ -126,7 +134,7 @@ class ArtifactObject implements Serializable, Parcelable {
 
         private Query(Parcel p) {
             title = p.readString();
-            blacklist = p.readArrayList(null);
+            blacklist = p.readArrayList(String.class.getClassLoader());
         }
 
         @Override
@@ -141,6 +149,7 @@ class ArtifactObject implements Serializable, Parcelable {
         }
     }
 
+    @NonNull
     @Override
     public String toString() {
         return title;
@@ -179,8 +188,9 @@ class ArtifactObject implements Serializable, Parcelable {
     };
 
     private ArtifactObject(Parcel parcel) {
+        id = parcel.readString();
         title = parcel.readString();
-        queries = parcel.readArrayList(null);
+        queries = parcel.readArrayList(Query.class.getClassLoader());
         thumbnail = parcel.readString();
         status = parcel.readInt();
         lastActType = parcel.readInt();
@@ -198,6 +208,7 @@ class ArtifactObject implements Serializable, Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
         dest.writeString(title);
         dest.writeList(queries);
         dest.writeString(thumbnail);

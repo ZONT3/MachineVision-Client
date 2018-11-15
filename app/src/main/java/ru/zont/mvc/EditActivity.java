@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 
 public class EditActivity extends AppCompatActivity {
@@ -59,11 +58,12 @@ public class EditActivity extends AppCompatActivity {
         object = getIntent().getParcelableExtra("object");
         if (object != null)  {
             edit = true;
+            objTitle.setText(object.getTitle());
             pb.setVisibility(View.VISIBLE);
 
             queries = object.getQueries();
             final WeakReference<EditActivity> wr = new WeakReference<>(this);
-            final ArrayList<String[]> thumbnails = new ArrayList<>();
+            final ArrayList<ArrayList<String>> thumbnails = new ArrayList<>();
             if (queries.size() > 0) {
                 new GetImages(queries.get(0).title, DEFAULT_RTCOUNT, -1, new GetImages.OnPostExecute() {
                     int i = 0;
@@ -75,11 +75,12 @@ public class EditActivity extends AppCompatActivity {
                             wr.get().finish();
                             return;
                         }
-                        for (String s : strings) {
+                        ArrayList<String> toRemove = new ArrayList<>();
+                        for (String s : strings)
                             if (queries.get(i).blacklist.contains(s))
-                                strings.remove(s);
-                        }
-                        thumbnails.add((String[]) strings.toArray());
+                                toRemove.add(s);
+                        for (String s : toRemove) strings.remove(s);
+                        thumbnails.add(strings);
 
                         i++;
                         if (i < queries.size()) new GetImages(
@@ -87,17 +88,13 @@ public class EditActivity extends AppCompatActivity {
                                 DEFAULT_RTCOUNT,
                                 -1,
                                 this
-                        ).execute();
-                        else {
+                        ); else {
                             pb.setVisibility(View.GONE);
-                            for (ArtifactObject.Query q : queries) {
-                                ArrayList<String> tnls = new ArrayList<>();
-                                Collections.addAll(tnls, thumbnails.get(queries.indexOf(q)));
-                                addQuery(wr, tnls, q.title, DEFAULT_RTCOUNT);
-                            }
+                            for (ArtifactObject.Query q : queries)
+                                addQuery(wr, thumbnails.get(queries.indexOf(q)), q.title, DEFAULT_RTCOUNT);
                         }
                     }
-                }).execute();
+                });
             }
         }
         if (!edit) edited = true;
@@ -159,13 +156,14 @@ public class EditActivity extends AppCompatActivity {
             @Override
             public boolean canScrollVertically() { return false; }
         });
-        rv.setAdapter(new EditThumbAdapter(strings, new Runnable() {
+        final EditThumbAdapter adapter = new EditThumbAdapter(strings, new Runnable() {
             @Override
             public void run() {
                 activity.edited = true;
             }
-        }, ea.get()));
-        ((EditThumbAdapter)rv.getAdapter()).mOffset += DEFAULT_RTCOUNT;
+        }, ea.get());
+        rv.setAdapter(adapter);
+        adapter.mOffset += DEFAULT_RTCOUNT;
 
         Button more = frag.findViewById(R.id.query_more);
         more.setOnClickListener(new View.OnClickListener() {
@@ -173,7 +171,7 @@ public class EditActivity extends AppCompatActivity {
             public void onClick(View v) {
                 activity.pb.setVisibility(View.VISIBLE);
                 new GetImages(query, DEFAULT_RTCOUNT,
-                        ((EditThumbAdapter) rv.getAdapter()).mOffset,
+                        adapter.mOffset,
                         new GetImages.OnPostExecute() {
                             @Override
                             public void onPostExecute(ArrayList<String> strings, String query, int rtcount, int offset, Exception e) {
@@ -182,9 +180,8 @@ public class EditActivity extends AppCompatActivity {
                                     Toast.makeText(activity, e == null ? "Error while getting thumbnails" : e.getMessage(), Toast.LENGTH_SHORT).show();
                                     return;
                                 }
-                                EditThumbAdapter eta = (EditThumbAdapter) rv.getAdapter();
-                                eta.add(strings);
-                                eta.mOffset += rtcount;
+                                adapter.add(strings);
+                                adapter.mOffset += rtcount;
                                 activity.pb.setVisibility(View.GONE);
                             }
                         });
@@ -205,7 +202,7 @@ public class EditActivity extends AppCompatActivity {
                                 activity.pb.setVisibility(View.VISIBLE);
                                 new GetImages(query,
                                         Integer.valueOf(et.getText().toString()),
-                                        ((EditThumbAdapter) rv.getAdapter()).mOffset,
+                                        adapter.mOffset,
                                         new GetImages.OnPostExecute() {
                                             @Override
                                             public void onPostExecute(ArrayList<String> strings, String query, int rtcount, int offset, Exception e) {
@@ -214,9 +211,11 @@ public class EditActivity extends AppCompatActivity {
                                                     Toast.makeText(activity, e == null ? "Error while getting thumbnails" : e.getMessage(), Toast.LENGTH_SHORT).show();
                                                     return;
                                                 }
-                                                EditThumbAdapter eta = (EditThumbAdapter) rv.getAdapter();
-                                                eta.add(strings);
-                                                eta.mOffset += rtcount;
+                                                if (activity.object != null)
+                                                    for (String s : activity.object.getBlacklist())
+                                                        strings.remove(s);
+                                                adapter.add(strings);
+                                                adapter.mOffset += rtcount;
                                                 activity.pb.setVisibility(View.GONE);
                                             }
                                         });
@@ -250,6 +249,7 @@ public class EditActivity extends AppCompatActivity {
         linearLayout.addView(frag, linearLayout.getChildCount() - 1);
     }
 
+    @SuppressWarnings("CanBeFinal")
     private static class GetImages extends AsyncTask<Void, Void, ArrayList<String>> {
 
         private String query;
@@ -304,9 +304,11 @@ public class EditActivity extends AppCompatActivity {
 
         private interface OnPostExecute {
 
+            @SuppressWarnings("unused")
             void onPostExecute(ArrayList<String> strings, String query, int rtcount, int offset, Exception e);
         }
     }
+    @SuppressWarnings("CanBeFinal")
     private static class SendArtifact extends AsyncTask<Void, Void, Void> {
 
         private Exception e;
@@ -345,6 +347,7 @@ public class EditActivity extends AppCompatActivity {
         }
 
     }
+    @SuppressWarnings({"WeakerAccess", "unused"})
     public void onSave(View v) {
         if (objTitle.getText().toString().equals("")) {
             Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
@@ -359,6 +362,10 @@ public class EditActivity extends AppCompatActivity {
                 return;
             }
             EditThumbAdapter adapter = (EditThumbAdapter)((RecyclerView) v1.findViewById(R.id.query_recycler)).getAdapter();
+            if (adapter == null) {
+                Toast.makeText(this, R.string.edit_err_adapter_missing, Toast.LENGTH_LONG).show();
+                return;
+            }
             q.blacklist = adapter.getBlacklist();
             if (thumbnail == null) thumbnail = adapter.getThumbUrl();
         }

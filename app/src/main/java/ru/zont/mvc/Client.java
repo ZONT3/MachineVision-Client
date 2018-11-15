@@ -2,8 +2,6 @@ package ru.zont.mvc;
 
 import android.util.Log;
 
-import com.google.gson.Gson;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,9 +16,9 @@ class Client {
     private static String ip;
     private static int port;
 
-    static void setup(String ip, int port) {
+    static void setup(String ip) {
         Client.ip = ip;
-        Client.port = port;
+        Client.port = 1337;
     }
 
     static void establish() throws IOException {
@@ -64,5 +62,4 @@ class Client {
         connected = false;
     }
 
-    static boolean isConnected() { return connected; }
 }
