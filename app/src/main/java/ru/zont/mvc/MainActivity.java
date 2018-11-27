@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private WeakReference<MainActivity> wr;
     private String ip;
+    private int port;
     private boolean idle = false;
     private ImageView svst;
     private boolean listGettingFail = false;
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         ip = getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).getString("svip", "dltngz.ddns.net");
+        port = getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).getInt("svport", 1337);
         main_pb = findViewById(R.id.main_pb);
         svst = findViewById(R.id.main_svst);
         wr = new WeakReference<>(this);
@@ -60,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(new ObjectAdapter(new ArtifactObject[]{}, new OnItemClick()));
 
-        Client.setup(ip);
+        Client.setup(ip, port);
         new Thread(new Runnable(){
             @Override
             public void run() {
@@ -268,22 +270,29 @@ public class MainActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.main_menu_editip:
-                final EditText et = new EditText(this);
-                et.setText(ip);
+                @SuppressLint("InflateParams") View v = getLayoutInflater().inflate(R.layout.dialog_ip, null);
+                final EditText etIP = v.findViewById(R.id.main_ipdiag_ip);
+                final EditText etPort = v.findViewById(R.id.main_ipdiag_port);
+                etIP.setText(ip);
+                etPort.setText(""+port);
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle(R.string.main_menu_chip)
-                        .setView(et)
+                        .setView(v)
                         .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                ip = et.getText().toString();
+                                ip = etIP.getText().toString();
+                                port = Integer.parseInt(etPort.getText().toString());
                                 getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).edit()
-                                        .putString("svip", et.getText().toString()).apply();
-                                Client.setup(ip);
+                                        .putString("svip", ip).apply();
+                                getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).edit()
+                                        .putInt("svport", port).apply();
+                                Client.setup(ip, port);
                             }
                         }).show();
                 return true;

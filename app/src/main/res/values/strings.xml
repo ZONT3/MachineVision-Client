@@ -51,4 +51,6 @@
     <string name="edit_addq">Add Query</string>
     <string name="main_obj_thumbnail">Thumbnail</string>
     <string name="query_item_remove">Remove</string>
+    <string name="main_ip">IP</string>
+    <string name="main_port">PORT</string>
 </resources>

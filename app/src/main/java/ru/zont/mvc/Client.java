@@ -16,9 +16,9 @@ class Client {
     private static String ip;
     private static int port;
 
-    static void setup(String ip) {
+    static void setup(String ip, int port) {
         Client.ip = ip;
-        Client.port = 1337;
+        Client.port = port;
     }
 
     static void establish() throws IOException {
