@@ -14,6 +14,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -82,9 +83,19 @@ public class MainActivity extends AppCompatActivity {
                         } catch (IOException e) {
                             System.out.println(e.getMessage());
                         }
-                        svst.setImageResource(b
-                                        ? android.R.drawable.presence_online
-                                        : android.R.drawable.presence_offline);
+                        final boolean fnB = b;
+                        if (svst.getTag() == null || !svst.getTag().equals(fnB))
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    svst.setImageResource(fnB
+                                            ? android.R.drawable.presence_online
+                                            : android.R.drawable.presence_offline);
+                                    svst.setTag(fnB);
+                                    Log.d("ChecerThread", "Changing svst");
+                                }
+                            });
+
                     }
                     //Log.d("Checker Thread", "Tick");
                     try { Thread.sleep(1500); } catch (InterruptedException e) { e.printStackTrace(); return; }
