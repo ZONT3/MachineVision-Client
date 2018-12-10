@@ -23,7 +23,7 @@ public class ArtifactObject implements Parcelable {
         static final int EDITED = 1;
         static final int LEARNED = 2;
     }
-    
+
     private String id = new RandomString(16, new Random()).nextString();
 
     private String title;
@@ -90,11 +90,11 @@ public class ArtifactObject implements Parcelable {
     long getCreated() { return created; }
 
     long getLearned() { return learned; }
-    
+
     int getTotal() { return total; }
-    
+
     void setEnabled(boolean enabled) { this.enabled = enabled; }
-    
+
     boolean isEnabled() { return enabled; }
 
     void edit(String title, ArrayList<Query> queries) {
@@ -109,15 +109,19 @@ public class ArtifactObject implements Parcelable {
         Query(String title) {
             this.title = title;
             blacklist = new ArrayList<>();
+            whitelist = new ArrayList<>();
         }
 
         String title;
         ArrayList<String> blacklist;
+        ArrayList<String> whitelist;
 
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof Query)) return super.equals(obj);
-            return title.equals(((Query) obj).title) && blacklist.equals(((Query) obj).blacklist);
+            return title.equals(((Query) obj).title)
+                    && blacklist.equals(((Query) obj).blacklist)
+                    && whitelist.equals(((Query) obj).whitelist);
         }
 
         public static final Parcelable.Creator<Query> CREATOR = new Creator<Query>() {
@@ -200,7 +204,7 @@ public class ArtifactObject implements Parcelable {
         enabled = parcel.readByte() != 0;
         total = parcel.readInt();
     }
-    
+
     @Override
     public int describeContents() {
         return 0;

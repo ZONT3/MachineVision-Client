@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/main_menu_editip"
-        android:icon="@drawable/baseline_edit_black_48"
+        android:icon="@drawable/baseline_edit_white_48"
         android:title="@string/main_menu_change"
         app:showAsAction="ifRoom" />
 </menu>
