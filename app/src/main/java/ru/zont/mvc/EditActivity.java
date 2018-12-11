@@ -3,19 +3,22 @@ package ru.zont.mvc;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 
 import java.util.Objects;
 import java.util.Random;
 
 public class EditActivity extends AppCompatActivity {
 
-    private Toolbar toolbar;
-    private RecyclerView list;
     private QueryAdapter adapter;
+    private ViewGroup dialog;
+    private View content;
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
@@ -23,13 +26,17 @@ public class EditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
-        toolbar = findViewById(R.id.edit_tb);
+        Toolbar toolbar = findViewById(R.id.edit_tb);
         setSupportActionBar(toolbar);
         ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
         actionBar.setDisplayHomeAsUpEnabled(true);
 
-        list = findViewById(R.id.edit_list);
-        adapter = new QueryAdapter();
+        content = findViewById(R.id.edit_content);
+        dialog = findViewById(R.id.edit_query_diag);
+        RecyclerView list = findViewById(R.id.edit_list);
+        adapter = new QueryAdapter(list);
+        adapter.setOnClickListener(new OnQueryClick(adapter));
+        list.setLayoutManager(new GridLayoutManager(this, 2));
         list.setAdapter(adapter);
     }
 
@@ -43,6 +50,51 @@ public class EditActivity extends AppCompatActivity {
         adapter.add(q);
     }
 
+    private class OnQueryClick extends QueryAdapter.OnClickListener {
+        OnQueryClick(QueryAdapter qa) {
+            super(qa);
+        }
+
+        @Override
+        public void onItemClick(ArtifactObject.Query query) {
+            int listWidth = Dimension.toDp(getResources().getDisplayMetrics().widthPixels, EditActivity.this)
+                    - 16 - 32;
+
+            RecyclerView queryList = dialog.findViewById(R.id.query_list);
+            queryList.setLayoutManager(new GridLayoutManager(EditActivity.this, listWidth / 100));
+            queryList.setAdapter(new QueryItemAdapter(queryList, query, null));
+
+            dialog.findViewById(R.id.query_ok).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.startAnimation(AnimationUtils.loadAnimation(EditActivity.this, R.anim.fadeout));
+                    dialog.postOnAnimation(new Runnable() {
+                        @Override
+                        public void run() {
+                            dialog.setVisibility(View.GONE);
+                            content.setForeground(null);
+                        }
+                    });
+                }
+            });
+            dialog.findViewById(R.id.query_delete).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //TODO
+                }
+            });
+
+            dialog.startAnimation(AnimationUtils.loadAnimation(EditActivity.this, R.anim.fadein));
+            dialog.setVisibility(View.VISIBLE);
+            dialog.postOnAnimation(new Runnable() {
+                @Override
+                public void run() {
+                    content.setForeground(getDrawable(android.R.drawable.screen_background_dark_transparent));
+                }
+            });
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.edit, menu);
@@ -53,5 +105,11 @@ public class EditActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return super.onSupportNavigateUp();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (dialog.getVisibility() != View.VISIBLE) super.onBackPressed();
+        else dialog.findViewById(R.id.query_ok).callOnClick();
     }
 }

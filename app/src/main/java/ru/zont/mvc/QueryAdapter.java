@@ -1,5 +1,6 @@
 package ru.zont.mvc;
 
+import android.content.ReceiverCallNotAllowedException;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -10,7 +11,9 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
     static class VH extends RecyclerView.ViewHolder {
@@ -33,12 +36,23 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
     }
 
     private ArrayList<ArtifactObject.Query> dataset;
+    private QueryAdapter.OnClickListener listener;
+    private WeakReference<RecyclerView> rv;
 
-    QueryAdapter(ArrayList<ArtifactObject.Query> dataset) {
+    QueryAdapter(RecyclerView recyclerView, ArrayList<ArtifactObject.Query> dataset, QueryAdapter.OnClickListener listener) {
         this.dataset = dataset;
+        this.listener = listener;
+        rv = new WeakReference<>(recyclerView);
     }
 
-    QueryAdapter() { dataset = new ArrayList<>(); }
+    QueryAdapter(RecyclerView recyclerView) {
+        dataset = new ArrayList<>();
+        rv = new WeakReference<>(recyclerView);
+    }
+
+    void setOnClickListener(QueryAdapter.OnClickListener listener) {
+        this.listener = listener;
+    }
 
     void add(ArtifactObject.Query q) {
         dataset.add(q);
@@ -49,6 +63,7 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
         int pos = dataset.indexOf(q);
         if (pos < 0) return;
         dataset.remove(q);
+        notifyItemRemoved(pos);
         notifyItemRangeChanged(pos, dataset.size());
     }
 
@@ -63,6 +78,7 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
     public void onBindViewHolder(@NonNull VH vh, int i) {
         ArtifactObject.Query query = dataset.get(i);
         vh.title.setText(query.title);
+        vh.itemView.setOnClickListener(listener);
         for (int j = 0; j < vh.iwList.length; j++) {
             if (query.whitelist.get(j) == null) break;
             ImageView iw = vh.iwList[j];
@@ -75,5 +91,23 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
     @Override
     public int getItemCount() {
         return dataset.size();
+    }
+
+    abstract static class OnClickListener implements View.OnClickListener {
+        private WeakReference<QueryAdapter> adapter;
+
+        OnClickListener(QueryAdapter qa) {
+            super();
+            adapter = new WeakReference<>(qa);
+        }
+
+        @Override
+        public void onClick(View v) {
+            onItemClick(adapter.get().dataset.get(
+                    Objects.requireNonNull(adapter.get().rv.get()
+                            .getLayoutManager()).getPosition(v)));
+        }
+
+        public abstract void onItemClick(ArtifactObject.Query item);
     }
 }
