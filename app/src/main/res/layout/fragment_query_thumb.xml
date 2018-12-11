@@ -72,6 +72,7 @@
             android:id="@+id/edit_query_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:textAlignment="viewStart"
             android:textAppearance="@android:style/TextAppearance.Material.Menu"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

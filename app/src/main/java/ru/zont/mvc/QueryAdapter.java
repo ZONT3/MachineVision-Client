@@ -108,6 +108,10 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
                             .getLayoutManager()).getPosition(v)));
         }
 
+        public QueryAdapter getAdapter() {
+            return adapter.get();
+        }
+
         public abstract void onItemClick(ArtifactObject.Query item);
     }
 }
