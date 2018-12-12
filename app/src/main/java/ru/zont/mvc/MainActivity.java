@@ -64,43 +64,37 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(new ObjectAdapter(new ArtifactObject[]{}, new OnItemClick()));
 
         Client.setup(ip, port);
-        new Thread(new Runnable(){
-            @Override
-            public void run() {
-                Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-                MainActivity act;
-                do {
-                    boolean b = false;
-                    act = wr.get();
-                    if (act.idle) {
-                        try {
-                            Client.establish();
-                            b = true;
-                            if (listGettingFail) {
-                                getList();
-                                listGettingFail = false;
-                            }
-                        } catch (IOException e) {
-                            System.out.println(e.getMessage());
+        new Thread(() -> {
+            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+            MainActivity act;
+            do {
+                boolean b = false;
+                act = wr.get();
+                if (act.idle) {
+                    try {
+                        Client.establish();
+                        b = true;
+                        if (listGettingFail) {
+                            getList();
+                            listGettingFail = false;
                         }
-                        final boolean fnB = b;
-                        if (svst.getTag() == null || !svst.getTag().equals(fnB))
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    svst.setImageResource(fnB
-                                            ? android.R.drawable.presence_online
-                                            : android.R.drawable.presence_offline);
-                                    svst.setTag(fnB);
-                                    Log.d("ChecerThread", "Changing svst");
-                                }
-                            });
-
+                    } catch (IOException e) {
+                        System.out.println(e.getMessage());
                     }
-                    //Log.d("Checker Thread", "Tick");
-                    try { Thread.sleep(1500); } catch (InterruptedException e) { e.printStackTrace(); return; }
-                } while (!act.isFinishing() && !act.isDestroyed());
-            }
+                    final boolean fnB = b;
+                    if (svst.getTag() == null || !svst.getTag().equals(fnB))
+                        runOnUiThread(() -> {
+                            svst.setImageResource(fnB
+                                    ? android.R.drawable.presence_online
+                                    : android.R.drawable.presence_offline);
+                            svst.setTag(fnB);
+                            Log.d("ChecerThread", "Changing svst");
+                        });
+
+                }
+                //Log.d("Checker Thread", "Tick");
+                try { Thread.sleep(1500); } catch (InterruptedException e) { e.printStackTrace(); return; }
+            } while (!act.isFinishing() && !act.isDestroyed());
         }).start();
     }
 
@@ -147,49 +141,38 @@ public class MainActivity extends AppCompatActivity {
 
             final AlertDialog dialog = new AlertDialog.Builder(MainActivity.this).setView(v).create();
 
-            edit.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startActivity(new Intent(MainActivity.this, EditActivity.class)
-                            .putExtra("object", object));
-                    dialog.dismiss();
-                }
+            edit.setOnClickListener(v12 -> {
+                startActivity(new Intent(MainActivity.this, EditActivity.class)
+                        .putExtra("object", object));
+                dialog.dismiss();
             });
-            delete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dialog.dismiss();
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            HashMap<String, String> request = new HashMap<>();
-                            request.put("request_code", "delete_object");
-                            request.put("id", object.getId());
-                            try {
-                                Client.sendJsonForResult(new Gson().toJson(request));
-                                getList();
-                            } catch (IOException e) { e.printStackTrace(); }
-                        }
-                    }).start();
-                }
+            delete.setOnClickListener(v1 -> {
+                dialog.dismiss();
+                new Thread(() -> {
+                    HashMap<String, String> request = new HashMap<>();
+                    request.put("request_code", "delete_object");
+                    request.put("id", object.getId());
+                    try {
+                        Client.sendJsonForResult(new Gson().toJson(request));
+                        getList();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             });
-            swith.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    object.setEnabled(isChecked);
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
-                            HashMap<String, Object> request = new HashMap<>();
-                            request.put("request_code", "new_object");
-                            request.put("artifact_object", object);
-                            try {
-                                Client.sendJsonForResult(new Gson().toJson(request));
-                            } catch (IOException e) { e.printStackTrace(); }
-                        }
-                    }).start();
-                }
+            swith.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                object.setEnabled(isChecked);
+                new Thread(() -> {
+                    Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
+                    HashMap<String, Object> request = new HashMap<>();
+                    request.put("request_code", "new_object");
+                    request.put("artifact_object", object);
+                    try {
+                        Client.sendJsonForResult(new Gson().toJson(request));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             });
 
             dialog.show();
@@ -294,17 +277,14 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle(R.string.main_menu_chip)
                         .setView(v)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                ip = etIP.getText().toString();
-                                port = Integer.parseInt(etPort.getText().toString());
-                                getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).edit()
-                                        .putString("svip", ip).apply();
-                                getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).edit()
-                                        .putInt("svport", port).apply();
-                                Client.setup(ip, port);
-                            }
+                        .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                            ip = etIP.getText().toString();
+                            port = Integer.parseInt(etPort.getText().toString());
+                            getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).edit()
+                                    .putString("svip", ip).apply();
+                            getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).edit()
+                                    .putInt("svport", port).apply();
+                            Client.setup(ip, port);
                         }).show();
                 return true;
             default: return super.onOptionsItemSelected(item);
@@ -326,40 +306,35 @@ public class MainActivity extends AppCompatActivity {
 
     private void getList() {
         idle = false;
-        runOnUiThread(new Runnable() {
+        runOnUiThread(() -> new ListGetter(new ListGetter.AsyncRunnable() {
             @Override
-            public void run() {
-                new ListGetter(new ListGetter.AsyncRunnable() {
-                    @Override
-                    public void onPreExecute() {
-                        main_pb.setVisibility(View.VISIBLE);
-                    }
-
-                    @Override
-                    public void onPostExecute(ArtifactObject[] objects, Exception e) {
-                        if (e != null || objects == null) {
-                            Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
-                            listGettingFail = true;
-                        } else {
-                            ObjectAdapter adapter = (ObjectAdapter) recyclerView.getAdapter();
-                            if (adapter == null) {
-                                try { throw new Exception("RecyclerView какого-то хуя не имеет адаптера."); }
-                                catch (Exception e1) {
-                                    e1.printStackTrace();
-                                    finish();
-                                    return;
-                                }
-                            }
-                            adapter.updateDataset(objects);
-                            svst.setImageResource(android.R.drawable.presence_online);
-                            listGettingFail = false;
-                        }
-
-                        main_pb.setVisibility(View.GONE);
-                        idle = true;
-                    }
-                }).execute();
+            public void onPreExecute() {
+                main_pb.setVisibility(View.VISIBLE);
             }
-        });
+
+            @Override
+            public void onPostExecute(ArtifactObject[] objects, Exception e) {
+                if (e != null || objects == null) {
+                    Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
+                    listGettingFail = true;
+                } else {
+                    ObjectAdapter adapter = (ObjectAdapter) recyclerView.getAdapter();
+                    if (adapter == null) {
+                        try { throw new Exception("RecyclerView какого-то хуя не имеет адаптера."); }
+                        catch (Exception e1) {
+                            e1.printStackTrace();
+                            finish();
+                            return;
+                        }
+                    }
+                    adapter.updateDataset(objects);
+                    svst.setImageResource(android.R.drawable.presence_online);
+                    listGettingFail = false;
+                }
+
+                main_pb.setVisibility(View.GONE);
+                idle = true;
+            }
+        }).execute());
     }
 }

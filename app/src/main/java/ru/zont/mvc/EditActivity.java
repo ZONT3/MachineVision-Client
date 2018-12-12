@@ -73,18 +73,10 @@ public class EditActivity extends AppCompatActivity {
             queryList.setLayoutManager(new GridLayoutManager(EditActivity.this, 4));
             queryList.setAdapter(new QueryItemAdapter(queryList, query, null));
 
-            ok.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dialog.dismiss();
-                }
-            });
-            delete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dialog.dismiss();
-                    getAdapter().remove(query);
-                }
+            ok.setOnClickListener(v12 -> dialog.dismiss());
+            delete.setOnClickListener(v1 -> {
+                dialog.dismiss();
+                getAdapter().remove(query);
             });
 
             dialog.show();
