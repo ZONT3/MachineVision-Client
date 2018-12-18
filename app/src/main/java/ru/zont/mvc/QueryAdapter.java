@@ -80,7 +80,8 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
         vh.title.setText(query.title);
         vh.itemView.setOnClickListener(listener);
         for (int j = 0; j < vh.iwList.length; j++) {
-            if (query.whitelist.get(j) == null) break;
+            try { if (query.whitelist.get(j) == null) break; }
+            catch (IndexOutOfBoundsException ignored) { break; }
             ImageView iw = vh.iwList[j];
             Glide.with(iw)
                     .load(query.whitelist.get(j))
@@ -103,15 +104,17 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
 
         @Override
         public void onClick(View v) {
-            onItemClick(adapter.get().dataset.get(
-                    Objects.requireNonNull(adapter.get().rv.get()
-                            .getLayoutManager()).getPosition(v)));
+            int position = Objects.requireNonNull(adapter.get().rv.get()
+                    .getLayoutManager()).getPosition(v);
+            onItemClick(adapter.get().dataset.get(position), position);
         }
 
         public QueryAdapter getAdapter() {
             return adapter.get();
         }
 
-        public abstract void onItemClick(ArtifactObject.Query item);
+        public abstract void onItemClick(ArtifactObject.Query item, int pos);
     }
+
+
 }

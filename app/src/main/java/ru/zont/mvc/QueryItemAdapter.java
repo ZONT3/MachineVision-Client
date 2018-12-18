@@ -45,16 +45,29 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
 
     @Override
     public void onBindViewHolder(@NonNull VH vh, int i) {
-        vh.del.setOnClickListener(onClickListener);
+        vh.itemView.setOnClickListener(onClickListener);
         Glide.with(vh.itemView)
                 .load(query.whitelist.get(i))
                 .apply(new RequestOptions().override(Dimension.toPx(80, vh.itemView.getContext())))
                 .into(vh.thumb);
+        vh.del.setOnClickListener(v -> remove(query.whitelist.get(i)));
     }
+
 
     @Override
     public int getItemCount() {
         return query.whitelist.size();
+    }
+
+    void remove(String url) {
+        int pos = query.whitelist.indexOf(url);
+        if (pos < 0 ) return;
+
+        query.whitelist.remove(url);
+        query.blacklist.add(url);
+
+        notifyItemRemoved(pos);
+        notifyItemRangeChanged(pos, query.whitelist.size());
     }
 
     static abstract class OnClickListener implements View.OnClickListener {

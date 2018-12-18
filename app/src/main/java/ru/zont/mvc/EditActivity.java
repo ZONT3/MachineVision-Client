@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +25,7 @@ public class EditActivity extends AppCompatActivity {
 
     private QueryAdapter adapter;
     private ViewGroup content;
+    private EditText title;
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
@@ -38,9 +40,11 @@ public class EditActivity extends AppCompatActivity {
 
         content = findViewById(R.id.edit_content);
         RecyclerView list = findViewById(R.id.edit_list);
+        title = findViewById(R.id.edit_title);
+
         adapter = new QueryAdapter(list);
         adapter.setOnClickListener(new OnQueryClick(adapter));
-        list.setLayoutManager(new GridLayoutManager(this, 2));
+        list.setLayoutManager(new GridLayoutManager(this, Dimension.getDisplayWidthDp(this) / 190));
         list.setAdapter(adapter);
     }
 
@@ -60,26 +64,22 @@ public class EditActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onItemClick(final ArtifactObject.Query query) {
-            @SuppressLint("InflateParams") View v = getLayoutInflater().inflate(R.layout.fragment_query, null);
-            ((TextView)v.findViewById(R.id.query_title)).setText(query.title);
-            RecyclerView queryList = v.findViewById(R.id.query_list);
-            Button ok = v.findViewById(R.id.query_ok);
-            Button delete = v.findViewById(R.id.query_delete);
-            final AlertDialog dialog = new AlertDialog.Builder(EditActivity.this)
-                    .setView(v)
+        public void onItemClick(final ArtifactObject.Query query, int pos) {
+            RecyclerView queryList = new RecyclerView(EditActivity.this);
+            queryList.setLayoutManager(new GridLayoutManager(EditActivity.this,
+                    (int) (Dimension.getDisplayWidthDp(EditActivity.this) * 0.9 / 110)));
+            queryList.setAdapter(new QueryItemAdapter(queryList, query, null));
+            AlertDialog dialog = new AlertDialog.Builder(EditActivity.this)
+                    .setTitle(query.title)
+                    .setView(queryList)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .setNegativeButton(R.string.main_op_delete,
+                            (i1, i2) -> getAdapter().remove(query))
+                    .setOnDismissListener(dialog1 -> adapter.notifyItemChanged(pos))
                     .create();
 
-            queryList.setLayoutManager(new GridLayoutManager(EditActivity.this, 4));
-            queryList.setAdapter(new QueryItemAdapter(queryList, query, null));
-
-            ok.setOnClickListener(v12 -> dialog.dismiss());
-            delete.setOnClickListener(v1 -> {
-                dialog.dismiss();
-                getAdapter().remove(query);
-            });
-
             dialog.show();
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(android.R.color.holo_red_dark));
         }
     }
 

@@ -34,4 +34,20 @@ public class Dimension {
     public static int toPx(int dp, Context context) {
         return setDp(dp, 0, context).pxX;
     }
+
+    public static int getDisplayWidthPx(Context context) {
+        return context.getResources().getDisplayMetrics().widthPixels;
+    }
+
+    public static int getDisplayWidthDp(Context context) {
+        return toDp(getDisplayWidthPx(context), context);
+    }
+
+    public static int getDisplayHeightPx(Context context) {
+        return context.getResources().getDisplayMetrics().heightPixels;
+    }
+
+    public static int getDisplayHeightDp(Context context) {
+        return toDp(getDisplayHeightPx(context), context);
+    }
 }

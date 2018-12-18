@@ -14,7 +14,7 @@
     <string name="no">No</string>
     <string name="yes">Yes</string>
     <string name="edit_setrtc">Count to get</string>
-    <string name="edit_title">New Object</string>
+    <string name="edit_title">Title</string>
     <string name="artobj_status_undefined">UNDEFINED</string>
     <string name="artobj_status_rtl">Ready to learn</string>
     <string name="artobj_status_dl">Downloading imgs</string>

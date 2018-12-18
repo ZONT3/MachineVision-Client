@@ -3,16 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/query_root"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="4dp"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    app:contentPadding="4dp"
-    android:layout_marginBottom="4dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginStart="8dp"
-    android:layout_marginEnd="8dp">
+    android:foreground="?attr/selectableItemBackground">
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
@@ -22,6 +21,8 @@
             android:id="@+id/edit_query_iw1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
             android:layout_marginEnd="4dp"
             app:layout_constraintEnd_toStartOf="@+id/edit_query_iw2"
             app:layout_constraintStart_toStartOf="parent"
@@ -32,6 +33,8 @@
             android:id="@+id/edit_query_iw2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/edit_query_iw1"
             app:layout_constraintTop_toTopOf="parent"
@@ -41,6 +44,7 @@
             android:id="@+id/edit_query_iw3"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:layout_marginEnd="4dp"
             app:layout_constraintEnd_toStartOf="@+id/edit_query_iw4"
@@ -53,30 +57,26 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/edit_query_iw3"
             app:layout_constraintTop_toBottomOf="@+id/edit_query_iw2"
             tools:srcCompat="@tools:sample/avatars" />
 
-        <View
-            android:id="@+id/divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="4dp"
-            android:background="?android:attr/listDivider"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/edit_query_iw3" />
-
         <TextView
             android:id="@+id/edit_query_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="?attr/colorButtonNormal"
+            android:padding="4dp"
             android:textAlignment="viewStart"
             android:textAppearance="@android:style/TextAppearance.Material.Menu"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider"
+            app:layout_constraintTop_toBottomOf="@+id/edit_query_iw3"
             tools:text="Query Title" />
+
     </android.support.constraint.ConstraintLayout>
 </android.support.v7.widget.CardView>
