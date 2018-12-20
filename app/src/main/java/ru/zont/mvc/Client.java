@@ -35,10 +35,14 @@ class Client {
     }
 
     static String sendJsonForResult(String json) throws IOException {
-        return sendJsonForResult(json, TIMEOUT);
+        return sendJsonForResult(json, /*null,*/ TIMEOUT);
     }
 
-    static String sendJsonForResult(String json, int timeout) throws IOException {
+//    static String sendJsonForResult(String json, String expectedResponse) throws IOException {
+//        return sendJsonForResult(json, expectedResponse, TIMEOUT);
+//    }
+
+    static String sendJsonForResult(String json, /*String expectedResponse,*/  int timeout) throws IOException {
         connect(ip, port);
         if (socket==null) throw new IOException("Socket is null");
         if (!connected) throw new IOException("Client is not connected!");
@@ -48,11 +52,12 @@ class Client {
         out.println(json);
 
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        String answer = in.readLine();
-        if (answer==null || answer.equals("")) throw new IOException("Incorrect response" + (answer == null ? ": null" : ": blank line"));
-        Log.d("CLIENT", "Answer:\n\t"+answer);
+        String response = in.readLine();
+        if (response==null || response.equals(""))
+            throw new IOException(String.format("Incorrect response (%s)", response));
+        Log.d("CLIENT", "Answer:\n\t"+response);
         disconnect();
-        return answer;
+        return response;
     }
 
     private static void disconnect() {

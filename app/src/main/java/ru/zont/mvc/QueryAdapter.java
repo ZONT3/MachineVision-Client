@@ -1,18 +1,20 @@
 package ru.zont.mvc;
 
-import android.content.ReceiverCallNotAllowedException;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
@@ -23,6 +25,7 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
         ImageView iw4;
         ImageView[] iwList;
         TextView title;
+        ProgressBar pb;
 
         VH(@NonNull View itemView) {
             super(itemView);
@@ -32,6 +35,7 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
             iw3 = itemView.findViewById(R.id.edit_query_iw3);
             iw4 = itemView.findViewById(R.id.edit_query_iw4);
             iwList = new ImageView[]{ iw1, iw2, iw3, iw4 };
+            pb = itemView.findViewById(R.id.edit_query_pb);
         }
     }
 
@@ -59,6 +63,25 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
         notifyItemInserted(dataset.size() - 1);
     }
 
+    void addQuery(String query, EditActivity activity) {
+        int thisIndex = dataset.size();
+        ArtifactObject.Query nQuery = new ArtifactObject.Query(query);
+        add(nQuery);
+        new EditActivity.ImageGetter(activity, new EditActivity.ImageGetter.ImageGetterPostExec() {
+            @Override
+            void postExec(WeakReference<EditActivity> wr, String[] result) {
+                if (result == null) {
+                    Toast.makeText(activity, "Error", Toast.LENGTH_SHORT).show();
+                    remove(nQuery);
+                    return;
+                }
+                nQuery.whitelist.addAll(Arrays.asList(result));
+                dataset.set(thisIndex, nQuery);
+                notifyItemChanged(thisIndex);
+            }
+        }, query, 4).execute();
+    }
+
     void remove(ArtifactObject.Query q) {
         int pos = dataset.indexOf(q);
         if (pos < 0) return;
@@ -78,15 +101,21 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
     public void onBindViewHolder(@NonNull VH vh, int i) {
         ArtifactObject.Query query = dataset.get(i);
         vh.title.setText(query.title);
-        vh.itemView.setOnClickListener(listener);
-        for (int j = 0; j < vh.iwList.length; j++) {
-            try { if (query.whitelist.get(j) == null) break; }
-            catch (IndexOutOfBoundsException ignored) { break; }
-            ImageView iw = vh.iwList[j];
-            Glide.with(iw)
-                    .load(query.whitelist.get(j))
-                    .into(iw);
-        }
+
+        if (query.whitelist == null || query.whitelist.size() != 0) {
+            vh.pb.setVisibility(View.GONE);
+            vh.itemView.setOnClickListener(listener);
+            for (int j = 0; j < vh.iwList.length; j++) {
+                ImageView iw = vh.iwList[j];
+                iw.setImageDrawable(null);
+                try {
+                    if (query.whitelist.get(j) == null) break;
+                } catch (IndexOutOfBoundsException ignored) { break; }
+                Glide.with(iw)
+                        .load(query.whitelist.get(j))
+                        .into(iw);
+            }
+        } else vh.pb.setVisibility(View.VISIBLE);
     }
 
     @Override

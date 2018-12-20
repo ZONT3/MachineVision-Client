@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> {
@@ -27,6 +28,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
     }
 
     private ArtifactObject.Query query;
+    private int offset;
     private View.OnClickListener onClickListener;
     private WeakReference<RecyclerView> rv;
 
@@ -34,6 +36,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
         this.query = query;
         this.onClickListener = onClickListener;
         this.rv = new WeakReference<>(rv);
+        offset = this.query.whitelist.size();
     }
 
     @NonNull
@@ -59,7 +62,18 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
         return query.whitelist.size();
     }
 
-    void remove(String url) {
+    private void add(String url) {
+        add(new String[]{ url });
+    }
+
+    private void add(String[] url) {
+        int pos = query.whitelist.size();
+        query.whitelist.addAll(Arrays.asList(url));
+        notifyItemRangeInserted(pos, url.length);
+        offset += url.length;
+    }
+
+    private void remove(String url) {
         int pos = query.whitelist.indexOf(url);
         if (pos < 0 ) return;
 
