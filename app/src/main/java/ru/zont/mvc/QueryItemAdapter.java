@@ -1,6 +1,8 @@
 package ru.zont.mvc;
 
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,11 +10,18 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -20,23 +29,30 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
     static class VH extends RecyclerView.ViewHolder {
         ImageView thumb;
         ImageButton del;
+        ProgressBar pb;
         VH(@NonNull View itemView) {
             super(itemView);
             thumb = itemView.findViewById(R.id.query_item_thumb);
             del = itemView.findViewById(R.id.query_item_del);
+            pb = itemView.findViewById(R.id.query_pb);
         }
     }
 
     private ArtifactObject.Query query;
     private int offset;
-    private View.OnClickListener onClickListener;
+    private QueryItemAdapter.OnLongClickListener onLongClickListener;
+    private QueryItemAdapter.OnClickListener onClickListener;
     private WeakReference<RecyclerView> rv;
 
-    QueryItemAdapter(RecyclerView rv, ArtifactObject.Query query, View.OnClickListener onClickListener) {
+    QueryItemAdapter(RecyclerView rv, ArtifactObject.Query query,
+                     OnClickListener onClickListener, OnLongClickListener onLongClickListener) {
         this.query = query;
-        this.onClickListener = onClickListener;
         this.rv = new WeakReference<>(rv);
         offset = this.query.whitelist.size();
+        this.onClickListener = onClickListener;
+        this.onLongClickListener = onLongClickListener;
+        this.onClickListener.setAdapter(this);
+        this.onLongClickListener.setAdapter(this);
     }
 
     @NonNull
@@ -48,29 +64,44 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
 
     @Override
     public void onBindViewHolder(@NonNull VH vh, int i) {
-        vh.itemView.setOnClickListener(onClickListener);
-        Glide.with(vh.itemView)
-                .load(query.whitelist.get(i))
-                .apply(new RequestOptions().override(Dimension.toPx(80, vh.itemView.getContext())))
-                .into(vh.thumb);
-        vh.del.setOnClickListener(v -> remove(query.whitelist.get(i)));
-    }
+        String url = query.whitelist.get(i);
+        vh.del.setOnClickListener(null);
+        vh.itemView.setOnClickListener(null);
 
+        vh.pb.setVisibility(View.VISIBLE);
+        vh.thumb.setImageDrawable(null);
+        if (url != null) {
+            vh.del.setOnClickListener(v -> remove(query.whitelist.get(i)));
+            vh.itemView.setOnClickListener(onClickListener);
+            vh.itemView.setOnLongClickListener(onLongClickListener);
+            Glide.with(vh.itemView)
+                    .load(url)
+                    .apply(new RequestOptions().override(Dimension.toPx(80, vh.itemView.getContext())))
+                    .listener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model,
+                                                    Target<Drawable> target, boolean isFirstResource) {
+                            Toast.makeText(vh.itemView.getContext(), R.string.edit_err_item_load, Toast.LENGTH_LONG).show();
+                            vh.pb.setVisibility(View.GONE);
+                            remove(url);
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(Drawable resource, Object model,
+                                                       Target<Drawable> target, DataSource dataSource,
+                                                       boolean isFirstResource) {
+                            vh.pb.setVisibility(View.GONE);
+                            return false;
+                        }
+                    })
+                    .into(vh.thumb);
+        }
+    }
 
     @Override
     public int getItemCount() {
         return query.whitelist.size();
-    }
-
-    private void add(String url) {
-        add(new String[]{ url });
-    }
-
-    private void add(String[] url) {
-        int pos = query.whitelist.size();
-        query.whitelist.addAll(Arrays.asList(url));
-        notifyItemRangeInserted(pos, url.length);
-        offset += url.length;
     }
 
     private void remove(String url) {
@@ -84,12 +115,50 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
         notifyItemRangeChanged(pos, query.whitelist.size());
     }
 
+    void loadMore(EditActivity activity, int count) {
+        int pos = query.whitelist.size();
+        for (int i = 0; i < count; i++)
+            query.whitelist.add(null);
+        notifyItemRangeInserted(pos, count);
+
+        new EditActivity.ImageGetter(activity, new EditActivity.ImageGetter.ImageGetterPostExec() {
+            @Override
+            void postExec(WeakReference<EditActivity> wr, String[] result) {
+                if (result == null) {
+                    offset -= count;
+                    for (int i = count-1; i >= 0; i--)
+                        query.whitelist.remove(i + pos);
+                    Toast.makeText(activity, R.string.edit_svresperr, Toast.LENGTH_LONG).show();
+                    notifyItemRangeRemoved(pos, count);
+                    return;
+                }
+
+                ArrayList<Integer> removed = new ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    if (result.length > i)
+                        query.whitelist.set(i + pos, result[i]);
+                    else {
+                        query.whitelist.remove(i + pos);
+                        removed.add(i + pos);
+                    }
+                }
+
+                for (Integer pos : removed) notifyItemRemoved(pos);
+                notifyItemRangeChanged(pos, count);
+            }
+        }, query.title, count, offset);
+        offset += count;
+    }
+
     static abstract class OnClickListener implements View.OnClickListener {
         private WeakReference<QueryItemAdapter> adapter;
 
-        OnClickListener(QueryItemAdapter qa) {
+        OnClickListener() {
             super();
-            adapter = new WeakReference<>(qa);
+        }
+
+        private void setAdapter(QueryItemAdapter adapter) {
+            this.adapter = new WeakReference<>(adapter);
         }
 
         @Override
@@ -97,6 +166,28 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
             onItemClick(adapter.get().query.whitelist.get(
                     Objects.requireNonNull(adapter.get().rv.get()
                             .getLayoutManager()).getPosition(v)));
+        }
+
+        public abstract void onItemClick(String item);
+    }
+
+    abstract static class OnLongClickListener implements View.OnLongClickListener {
+        private WeakReference<QueryItemAdapter> adapter;
+
+        OnLongClickListener() {
+            super();
+        }
+
+        private void setAdapter(QueryItemAdapter adapter) {
+            this.adapter = new WeakReference<>(adapter);
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            onItemClick(adapter.get().query.whitelist.get(
+                    Objects.requireNonNull(adapter.get().rv.get()
+                            .getLayoutManager()).getPosition(v)));
+            return true;
         }
 
         public abstract void onItemClick(String item);

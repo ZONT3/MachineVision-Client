@@ -79,7 +79,7 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
                 dataset.set(thisIndex, nQuery);
                 notifyItemChanged(thisIndex);
             }
-        }, query, 4).execute();
+        }, query, 4);
     }
 
     void remove(ArtifactObject.Query q) {
@@ -101,13 +101,13 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
     public void onBindViewHolder(@NonNull VH vh, int i) {
         ArtifactObject.Query query = dataset.get(i);
         vh.title.setText(query.title);
+        for (ImageView iw : vh.iwList) iw.setImageDrawable(null);
 
         if (query.whitelist == null || query.whitelist.size() != 0) {
             vh.pb.setVisibility(View.GONE);
             vh.itemView.setOnClickListener(listener);
             for (int j = 0; j < vh.iwList.length; j++) {
                 ImageView iw = vh.iwList[j];
-                iw.setImageDrawable(null);
                 try {
                     if (query.whitelist.get(j) == null) break;
                 } catch (IndexOutOfBoundsException ignored) { break; }
@@ -138,12 +138,11 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
             onItemClick(adapter.get().dataset.get(position), position);
         }
 
-        public QueryAdapter getAdapter() {
+        QueryAdapter getAdapter() {
             return adapter.get();
         }
 
         public abstract void onItemClick(ArtifactObject.Query item, int pos);
     }
-
 
 }

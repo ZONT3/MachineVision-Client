@@ -17,22 +17,33 @@
         android:layout_marginTop="2dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="2dp"
+        android:contentDescription="@string/main_obj_thumbnail"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars"
-        android:contentDescription="@string/main_obj_thumbnail" />
+        tools:srcCompat="@tools:sample/avatars" />
 
     <ImageButton
         android:id="@+id/query_item_del"
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:background="@drawable/toast_frame_v28"
+        android:contentDescription="@string/query_item_remove"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/baseline_close_black_24dp"
-        android:contentDescription="@string/query_item_remove" />
+        app:srcCompat="@drawable/baseline_close_black_24dp" />
+
+    <ProgressBar
+        android:id="@+id/query_pb"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!--<View-->
     <!--android:id="@+id/divider2"-->
