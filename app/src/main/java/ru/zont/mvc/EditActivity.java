@@ -1,5 +1,6 @@
 package ru.zont.mvc;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -11,12 +12,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -28,8 +33,10 @@ import java.util.Objects;
 public class EditActivity extends AppCompatActivity {
 
     private QueryAdapter adapter;
-    private ViewGroup content;
     private EditText title;
+
+    private ArtifactObject editObject;
+    private String ovrdThumb;
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
@@ -42,7 +49,6 @@ public class EditActivity extends AppCompatActivity {
         ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
         actionBar.setDisplayHomeAsUpEnabled(true);
 
-        content = findViewById(R.id.edit_content);
         RecyclerView list = findViewById(R.id.edit_list);
         title = findViewById(R.id.edit_title);
 
@@ -50,6 +56,12 @@ public class EditActivity extends AppCompatActivity {
         adapter.setOnClickListener(new OnQueryClick(adapter));
         list.setLayoutManager(new GridLayoutManager(this, Dimension.getDisplayWidthDp(this) / 190));
         list.setAdapter(adapter);
+
+        if ((editObject = getIntent().getParcelableExtra("object")) != null) {
+            title.setText(editObject.getTitle());
+            for (ArtifactObject.Query q : editObject.getQueries())
+                adapter.add(q);
+        }
     }
 
     public void addQuery(View v) {
@@ -160,8 +172,9 @@ public class EditActivity extends AppCompatActivity {
                 }
             }, new QueryItemAdapter.OnLongClickListener() {
                 @Override
-                public void onItemClick(String item) {
-                    // TODO: 23.12.2018
+                public void onItemLongClick(String item) {
+                    ovrdThumb = item;
+                    Toast.makeText(EditActivity.this, R.string.edit_thumb_set, Toast.LENGTH_SHORT).show();
                 }
             });
             queryList.setAdapter(adapter);
@@ -210,6 +223,44 @@ public class EditActivity extends AppCompatActivity {
         }
     }
 
+    private boolean save() {
+        ArtifactObject toSend;
+        if (editObject != null) {
+            try {
+                new DeleteRequest(editObject.getId());
+            } catch (IOException e) {
+                runOnUiThread(() ->
+                        Toast.makeText(this, R.string.edit_err_save, Toast.LENGTH_LONG).show());
+                return false;
+            }
+            editObject.edit(title.getText().toString(), adapter.getDataset());
+            if (ovrdThumb != null) editObject.setThumbnail(ovrdThumb);
+            toSend = editObject;
+        } else {
+            toSend = new ArtifactObject(title.getText().toString(), adapter.getDataset());
+            toSend.setThumbnail(ovrdThumb == null ? adapter.getDataset().get(0).whitelist.get(0) : ovrdThumb);
+        }
+
+        try {
+            return Client.sendJsonForResult(new Gson().toJson(new NewObjRequest(toSend))).equals("success");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean canSave() {
+        if (title.getText().toString().isEmpty()) {
+            Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
+            return false;
+        }
+        if (adapter.getDataset().size() <= 0) {
+            Toast.makeText(this, R.string.edit_err_noquer, Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.edit, menu);
@@ -217,8 +268,69 @@ public class EditActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.edit_menu_save:
+                startSaving();
+                return true;
+            default: return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return super.onSupportNavigateUp();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (editObject != null && editObject.dataEqualsExcId(new ArtifactObject(title.getText().toString(), adapter.getDataset()))
+                || editObject == null && title.getText().toString().isEmpty() && adapter.getDataset().size() == 0)
+            super.onBackPressed();
+        else {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.edit_save)
+                    .setPositiveButton(R.string.yes, (dialog, which) -> startSaving())
+                    .setNegativeButton(R.string.no, (d,w) -> super.onBackPressed())
+                    .setNeutralButton(android.R.string.cancel, null)
+                    .create().show();
+        }
+    }
+
+    private void startSaving() {
+        if (!canSave()) return;
+        ProgressDialog pd = new ProgressDialog(this);
+        pd.setIndeterminate(true);
+        pd.show();
+        new Thread(() -> {
+                if (save()) finish();
+                else runOnUiThread(() -> {
+                    Toast.makeText(this, "Error on saving", Toast.LENGTH_SHORT)
+                            .show();
+                    pd.dismiss();
+                });
+        }).start();
+    }
+
+    @SuppressWarnings("unused")
+    private static class DeleteRequest {
+        private String id;
+        private final String request_code = "delete_object";
+
+        private DeleteRequest(String id) throws IOException {
+            this.id = id;
+            Client.sendJsonForResult(new Gson().toJson(this));
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static class NewObjRequest {
+        private final String request_code = "new_object";
+        private ArtifactObject artifact_object;
+
+        private NewObjRequest(ArtifactObject object) {
+            artifact_object = object;
+        }
     }
 }

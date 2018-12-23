@@ -7,7 +7,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -22,7 +21,6 @@ import com.bumptech.glide.request.target.Target;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> {
@@ -48,7 +46,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
                      OnClickListener onClickListener, OnLongClickListener onLongClickListener) {
         this.query = query;
         this.rv = new WeakReference<>(rv);
-        offset = this.query.whitelist.size();
+        offset = this.query.whitelist.size()+1;
         this.onClickListener = onClickListener;
         this.onLongClickListener = onLongClickListener;
         this.onClickListener.setAdapter(this);
@@ -184,12 +182,12 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
 
         @Override
         public boolean onLongClick(View v) {
-            onItemClick(adapter.get().query.whitelist.get(
+            onItemLongClick(adapter.get().query.whitelist.get(
                     Objects.requireNonNull(adapter.get().rv.get()
                             .getLayoutManager()).getPosition(v)));
             return true;
         }
 
-        public abstract void onItemClick(String item);
+        public abstract void onItemLongClick(String item);
     }
 }

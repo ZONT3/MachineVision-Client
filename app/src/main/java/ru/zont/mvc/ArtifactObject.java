@@ -5,6 +5,7 @@ import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Random;
 
 @SuppressWarnings({"unchecked", "CanBeFinal"})
@@ -18,6 +19,7 @@ public class ArtifactObject implements Parcelable {
         static final int READY_FU = 3;
         static final int OUTDATED = 4;
     }
+
     abstract class ACTION {
         static final int CREATED = 0;
         static final int EDITED = 1;
@@ -35,7 +37,6 @@ public class ArtifactObject implements Parcelable {
     private long created;
     private long learned;
     private boolean enabled;
-    private int total;
 
     //private ArrayList<File> customImages;
 
@@ -48,7 +49,6 @@ public class ArtifactObject implements Parcelable {
         created = lastAct;
         learned = -1;
         enabled = true;
-        total = -1;
         //this.customImages = customImages;
     }
 
@@ -91,7 +91,12 @@ public class ArtifactObject implements Parcelable {
 
     long getLearned() { return learned; }
 
-    int getTotal() { return total; }
+    int getTotal() {
+        int res = 0;
+        for (Query q : queries)
+            res += q.whitelist.size();
+        return res;
+    }
 
     void setEnabled(boolean enabled) { this.enabled = enabled; }
 
@@ -119,9 +124,9 @@ public class ArtifactObject implements Parcelable {
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof Query)) return super.equals(obj);
-            return title.equals(((Query) obj).title)
-                    && blacklist.equals(((Query) obj).blacklist)
-                    && whitelist.equals(((Query) obj).whitelist);
+            return Objects.equals(title, ((Query) obj).title)
+                    && Objects.equals(blacklist, ((Query) obj).blacklist)
+                    && Objects.equals(whitelist, ((Query) obj).whitelist);
         }
 
         public static final Parcelable.Creator<Query> CREATOR = new Creator<Query>() {
@@ -139,6 +144,7 @@ public class ArtifactObject implements Parcelable {
         private Query(Parcel p) {
             title = p.readString();
             blacklist = p.readArrayList(String.class.getClassLoader());
+            whitelist = p.readArrayList(String.class.getClassLoader());
         }
 
         @Override
@@ -150,6 +156,7 @@ public class ArtifactObject implements Parcelable {
         public void writeToParcel(Parcel dest, int flags) {
             dest.writeString(title);
             dest.writeList(blacklist);
+            dest.writeList(whitelist);
         }
     }
 
@@ -161,22 +168,33 @@ public class ArtifactObject implements Parcelable {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof ArtifactObject) return ((ArtifactObject)obj).id.equals(id);
+        if (obj instanceof ArtifactObject) return Objects.equals(((ArtifactObject) obj).id, id);
         else return super.equals(obj);
     }
 
     boolean dataEquals(ArtifactObject object) {
-        return id.equals(object.id) &&
-                title.equals(object.title) &&
-                queries.equals(object.queries) &&
-                thumbnail.equals(object.thumbnail) &&
+        return Objects.equals(id, object.id) &&
+                Objects.equals(title, object.title) &&
+                Objects.equals(queries, object.queries) &&
+                Objects.equals(thumbnail, object.thumbnail) &&
                 status == object.status &&
                 lastActType == object.lastActType &&
                 lastAct == object.lastAct &&
                 created == object.created &&
                 learned == object.learned &&
-                enabled == object.enabled &&
-                total == object.total;
+                enabled == object.enabled;
+    }
+
+    boolean dataEqualsExcId(ArtifactObject object) {
+        return Objects.equals(title, object.title) &&
+                Objects.equals(queries, object.queries) &&
+                Objects.equals(thumbnail, object.thumbnail) &&
+                status == object.status &&
+                lastActType == object.lastActType &&
+                lastAct == object.lastAct &&
+                created == object.created &&
+                learned == object.learned &&
+                enabled == object.enabled;
     }
 
     public static final Parcelable.Creator<ArtifactObject> CREATOR = new Parcelable.Creator<ArtifactObject>() {
@@ -202,7 +220,6 @@ public class ArtifactObject implements Parcelable {
         created = parcel.readLong();
         learned = parcel.readLong();
         enabled = parcel.readByte() != 0;
-        total = parcel.readInt();
     }
 
     @Override
@@ -222,6 +239,5 @@ public class ArtifactObject implements Parcelable {
         dest.writeLong(created);
         dest.writeLong(learned);
         dest.writeByte((byte) (enabled ? 1 : 0));
-        dest.writeInt(total);
     }
 }

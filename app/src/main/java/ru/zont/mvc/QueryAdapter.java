@@ -123,6 +123,10 @@ public class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
         return dataset.size();
     }
 
+    ArrayList<ArtifactObject.Query> getDataset() {
+        return dataset;
+    }
+
     abstract static class OnClickListener implements View.OnClickListener {
         private WeakReference<QueryAdapter> adapter;
 

@@ -154,10 +154,11 @@ public class MainActivity extends AppCompatActivity {
                     request.put("id", object.getId());
                     try {
                         Client.sendJsonForResult(new Gson().toJson(request));
-                        getList();
+//                            Thread.sleep(1000);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    getList();
                 }).start();
             });
             swith.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -319,14 +320,7 @@ public class MainActivity extends AppCompatActivity {
                     listGettingFail = true;
                 } else {
                     ObjectAdapter adapter = (ObjectAdapter) recyclerView.getAdapter();
-                    if (adapter == null) {
-                        try { throw new Exception("RecyclerView какого-то хуя не имеет адаптера."); }
-                        catch (Exception e1) {
-                            e1.printStackTrace();
-                            finish();
-                            return;
-                        }
-                    }
+                    assert adapter != null;
                     adapter.updateDataset(objects);
                     svst.setImageResource(android.R.drawable.presence_online);
                     listGettingFail = false;

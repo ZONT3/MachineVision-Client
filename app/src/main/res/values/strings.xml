@@ -56,4 +56,6 @@
     <string name="query_more_count">Count</string>
     <string name="edit_svresperr"><![CDATA[Error occurred when contacting server. Try to request < 50 images.]]></string>
     <string name="edit_err_item_load">Some item has failed to display, removing it...</string>
+    <string name="edit_err_save">Error occurred when contacting server.</string>
+    <string name="edit_err_noquer">There is no queries</string>
 </resources>
