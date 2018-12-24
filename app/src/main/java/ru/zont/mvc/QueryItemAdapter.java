@@ -41,6 +41,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
     private QueryItemAdapter.OnLongClickListener onLongClickListener;
     private QueryItemAdapter.OnClickListener onClickListener;
     private WeakReference<RecyclerView> rv;
+    private int firstLoaded = 0;
 
     QueryItemAdapter(RecyclerView rv, ArtifactObject.Query query,
                      OnClickListener onClickListener, OnLongClickListener onLongClickListener) {
@@ -82,6 +83,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
                             Toast.makeText(vh.itemView.getContext(), R.string.edit_err_item_load, Toast.LENGTH_LONG).show();
                             vh.pb.setVisibility(View.GONE);
                             remove(url);
+                            firstLoaded++;
                             return true;
                         }
 
@@ -90,6 +92,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
                                                        Target<Drawable> target, DataSource dataSource,
                                                        boolean isFirstResource) {
                             vh.pb.setVisibility(View.GONE);
+                            firstLoaded++;
                             return false;
                         }
                     })
@@ -119,33 +122,40 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
             query.whitelist.add(null);
         notifyItemRangeInserted(pos, count);
 
-        new EditActivity.ImageGetter(activity, new EditActivity.ImageGetter.ImageGetterPostExec() {
-            @Override
-            void postExec(WeakReference<EditActivity> wr, String[] result) {
-                if (result == null) {
-                    offset -= count;
-                    for (int i = count-1; i >= 0; i--)
-                        query.whitelist.remove(i + pos);
-                    Toast.makeText(activity, R.string.edit_svresperr, Toast.LENGTH_LONG).show();
-                    notifyItemRangeRemoved(pos, count);
-                    return;
-                }
-
-                ArrayList<Integer> removed = new ArrayList<>();
-                for (int i = 0; i < count; i++) {
-                    if (result.length > i)
-                        query.whitelist.set(i + pos, result[i]);
-                    else {
-                        query.whitelist.remove(i + pos);
-                        removed.add(i + pos);
-                    }
-                }
-
-                for (Integer pos : removed) notifyItemRemoved(pos);
-                notifyItemRangeChanged(pos, count);
+        new Thread(() -> {
+            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+            while (firstLoaded < 4) {
+                try { Thread.sleep(500); }
+                catch (InterruptedException e) { e.printStackTrace(); }
             }
-        }, query.title, count, offset);
-        offset += count;
+            new EditActivity.ImageGetter(activity, new EditActivity.ImageGetter.ImageGetterPostExec() {
+                @Override
+                void postExec(WeakReference<EditActivity> wr, String[] result) {
+                    if (result == null) {
+                        offset -= count;
+                        for (int i = count-1; i >= 0; i--)
+                            query.whitelist.remove(i + pos);
+                        Toast.makeText(activity, R.string.edit_svresperr, Toast.LENGTH_LONG).show();
+                        notifyItemRangeRemoved(pos, count);
+                        return;
+                    }
+
+                    ArrayList<Integer> removed = new ArrayList<>();
+                    for (int i = 0; i < count; i++) {
+                        if (result.length > i)
+                            query.whitelist.set(i + pos, result[i]);
+                        else {
+                            query.whitelist.remove(i + pos);
+                            removed.add(i + pos);
+                        }
+                    }
+
+                    for (Integer pos : removed) notifyItemRemoved(pos);
+                    notifyItemRangeChanged(pos, count);
+                }
+            }, query.title, count, offset);
+            offset += count;
+        }).start();
     }
 
     static abstract class OnClickListener implements View.OnClickListener {
