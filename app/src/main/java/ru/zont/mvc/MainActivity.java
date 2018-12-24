@@ -2,8 +2,11 @@ package ru.zont.mvc;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -14,11 +17,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -29,21 +32,24 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
+import java.net.InetAddress;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
+    private String SHARED_PREFS_IP;
 
     private ProgressBar main_pb;
     private RecyclerView recyclerView;
-    private WeakReference<MainActivity> wr;
     private String ip;
     private int port;
-    private boolean idle = false;
     private ImageView svst;
-    private boolean listGettingFail = false;
+    private boolean idle;
+
+    private Thread mainChecker;
+    private Thread lanChecker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,9 +60,9 @@ public class MainActivity extends AppCompatActivity {
 
         ip = getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).getString("svip", "dltngz.ddns.net");
         port = getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).getInt("svport", 1337);
+        SHARED_PREFS_IP = ip;
         main_pb = findViewById(R.id.main_pb);
         svst = findViewById(R.id.main_svst);
-        wr = new WeakReference<>(this);
 
         recyclerView = findViewById(R.id.main_recycler);
         recyclerView.setHasFixedSize(true);
@@ -64,38 +70,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(new ObjectAdapter(new ArtifactObject[]{}, new OnItemClick()));
 
         Client.setup(ip, port);
-        new Thread(() -> {
-            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-            MainActivity act;
-            do {
-                boolean b = false;
-                act = wr.get();
-                if (act.idle) {
-                    try {
-                        Client.establish();
-                        b = true;
-                        if (listGettingFail) {
-                            getList();
-                            listGettingFail = false;
-                        }
-                    } catch (IOException e) {
-                        System.out.println(e.getMessage());
-                    }
-                    final boolean fnB = b;
-                    if (svst.getTag() == null || !svst.getTag().equals(fnB))
-                        runOnUiThread(() -> {
-                            svst.setImageResource(fnB
-                                    ? android.R.drawable.presence_online
-                                    : android.R.drawable.presence_offline);
-                            svst.setTag(fnB);
-                            Log.d("ChecerThread", "Changing svst");
-                        });
-
-                }
-                //Log.d("Checker Thread", "Tick");
-                try { Thread.sleep(1500); } catch (InterruptedException e) { e.printStackTrace(); return; }
-            } while (!act.isFinishing() && !act.isDestroyed());
-        }).start();
     }
 
     private class OnItemClick extends ObjectAdapter.OnItemClick {
@@ -280,6 +254,7 @@ public class MainActivity extends AppCompatActivity {
                         .setView(v)
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                             ip = etIP.getText().toString();
+                            SHARED_PREFS_IP = ip;
                             port = Integer.parseInt(etPort.getText().toString());
                             getSharedPreferences("ru.zont.mvc.sys", MODE_PRIVATE).edit()
                                     .putString("svip", ip).apply();
@@ -294,15 +269,120 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        idle = false;
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
+        if (mainChecker != null && mainChecker.isAlive()) mainChecker.interrupt();
+        if (lanChecker != null && lanChecker.isAlive()) lanChecker.interrupt();
     }
 
     @Override
     protected void onResume() {
-        getList();
         super.onResume();
+        svst.setImageResource(android.R.drawable.presence_invisible);
+        idle = true;
+
+        startCheckers();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void startCheckers() {
+        Runnable lanCheckerRunnable = () -> {
+            Thread.currentThread().setPriority(2);
+            Log.d("LanChecker", "Started");
+            while (Thread.currentThread().isAlive() && !Thread.currentThread().isInterrupted()) {
+                try {
+                    Context context = MainActivity.this;
+
+                    ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                    NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                    WifiManager wm = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+                    WifiInfo connectionInfo = wm.getConnectionInfo();
+                    int ipAddress = connectionInfo.getIpAddress();
+                    String ipString = Formatter.formatIpAddress(ipAddress);
+
+
+                    Log.d("LanScanner", "activeNetwork: " + String.valueOf(activeNetwork));
+                    Log.d("LanScanner", "ipString: " + String.valueOf(ipString));
+
+                    String prefix = ipString.substring(0, ipString.lastIndexOf(".") + 1);
+                    Log.d("LanScanner", "prefix: " + prefix);
+
+                    for (int i = 0; i < 255; i++) {
+                        String testIp = prefix + String.valueOf(i);
+
+                        InetAddress address = InetAddress.getByName(testIp);
+                        String hostName = address.getCanonicalHostName();
+
+                        if (!hostName.contains(testIp))
+                            if (Client.tryConnection(testIp, port) == null) {
+                                ip = testIp;
+                                Client.setup(testIp, port);
+                            }
+                    }
+                } catch (Throwable t) {
+                    Log.e("LanScanner", "Well that's not good.", t);
+                }
+
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    Log.d("LanChecker", "Interrupted.");
+                    return;
+                }
+            }
+        };
+
+        mainChecker = new Thread(() -> {
+            Thread.currentThread().setPriority(3);
+
+            boolean first = true;
+            boolean wasConnected = false;
+            while (Thread.currentThread().isAlive() && !Thread.currentThread().isInterrupted()) {
+                if (idle) {
+                    Throwable result = Client.tryConnection(ip, port);
+
+                    if (result == null) {
+                        if (!wasConnected) runOnUiThread(this::onConnectionResumed);
+                        if (lanChecker != null && lanChecker.isAlive()) lanChecker.interrupt();
+                    } else {
+                        ip = SHARED_PREFS_IP;
+                        if (wasConnected || first) {
+                            runOnUiThread(() -> {
+                                Toast.makeText(this, result.getLocalizedMessage(), Toast.LENGTH_LONG)
+                                        .show();
+                                onConnectionLost();
+                            });
+                        }
+                        if (lanChecker == null || !lanChecker.isAlive())
+                            (lanChecker = new Thread(lanCheckerRunnable)).start();
+                    }
+
+                    wasConnected = result == null;
+                    first = false;
+                }
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Log.d("MainChecker", "Interrupted.");
+                    return;
+                }
+            }
+        });
+        mainChecker.start();
+    }
+
+    private void onConnectionResumed() {
+        svst.setImageResource(android.R.drawable.presence_online);
+        getList();
+    }
+
+    private void onConnectionLost() {
+        svst.setImageResource(android.R.drawable.presence_offline);
+        main_pb.setVisibility(View.GONE);
+
+        ObjectAdapter adapter = (ObjectAdapter) recyclerView.getAdapter();
+        if (adapter != null) adapter.clear();
     }
 
     private void getList() {
@@ -317,13 +397,11 @@ public class MainActivity extends AppCompatActivity {
             public void onPostExecute(ArtifactObject[] objects, Exception e) {
                 if (e != null || objects == null) {
                     Toast.makeText(MainActivity.this, e != null ? e.getMessage() : "Objects is null", Toast.LENGTH_LONG).show();
-                    listGettingFail = true;
                 } else {
                     ObjectAdapter adapter = (ObjectAdapter) recyclerView.getAdapter();
                     assert adapter != null;
                     adapter.updateDataset(objects);
                     svst.setImageResource(android.R.drawable.presence_online);
-                    listGettingFail = false;
                 }
 
                 main_pb.setVisibility(View.GONE);

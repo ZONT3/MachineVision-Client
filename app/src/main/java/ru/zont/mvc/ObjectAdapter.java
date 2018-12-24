@@ -128,6 +128,14 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
         }
     }
 
+    void clear() {
+        if (mDataset.size() == 0) return;
+        int size = mDataset.size();
+        mDataset = new ArrayList<>();
+        notifyItemRangeRemoved(0, size);
+        notifyItemRangeChanged(0, size);
+    }
+
     static abstract class OnItemClick implements View.OnClickListener {
         private WeakReference<ObjectAdapter> wr;
 
