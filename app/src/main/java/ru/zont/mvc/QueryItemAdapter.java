@@ -4,6 +4,7 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -72,7 +74,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
 
         vh.pb.setVisibility(View.VISIBLE);
         vh.thumb.setImageDrawable(null);
-        if (url != null) {
+        if (url != null && !url.startsWith("null:")) {
             vh.del.setOnClickListener(v -> remove(query.whitelist.get(i)));
             vh.itemView.setOnClickListener(onClickListener);
             vh.itemView.setOnLongClickListener(onLongClickListener);
@@ -119,19 +121,14 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
         notifyItemRangeChanged(pos, query.whitelist.size());
     }
 
-    private static ArrayList<Long> queue = new ArrayList<>();
     void loadMore(EditActivity activity, int count) {
         int pos = query.whitelist.size();
-        for (int i = 0; i < count; i++)
-            query.whitelist.add(null);
+        String id = "null:" + new RandomString(8, new Random());
+        for (int i = 0; i < count; i++) query.whitelist.add(id);
         notifyItemRangeInserted(pos, count);
 
-        new Thread(() -> {
-            long id = new Random().nextLong();
-            queue.add(id);
-            while (!(queue.size() <= 0) || queue.get(0).equals(id))
-                try { Thread.sleep(300); } catch (InterruptedException ignored) { return; }
 
+        new Thread(() -> {
             Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
             while (firstLoaded < firstNeeded) {
                 try { Thread.sleep(500); }
@@ -140,9 +137,11 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
             new EditActivity.ImageGetter(activity, new EditActivity.ImageGetter.ImageGetterPostExec() {
                 @Override
                 void postExec(WeakReference<EditActivity> wr, String[] result) {
+                    Log.d("LoadMore", String.format("id=%s count=%d", id, count));
+                    int pos = query.whitelist.indexOf(id);
                     if (result == null) {
                         offset -= count;
-                        for (int i = count-1; i >= 0; i--)
+                        for (int i = count - 1; i >= 0; i--)
                             query.whitelist.remove(i + pos);
                         Toast.makeText(activity, R.string.edit_svresperr, Toast.LENGTH_LONG).show();
                         notifyItemRangeRemoved(pos, count);
@@ -159,9 +158,8 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
                         }
                     }
 
-                    for (Integer pos : removed) notifyItemRemoved(pos);
+                    for (Integer i : removed) notifyItemRemoved(i);
                     notifyItemRangeChanged(pos, count);
-                    if (queue.size() > 0) queue.remove(0);
                 }
             }, query.title, count, offset);
             offset += count;

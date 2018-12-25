@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <application
+        android:usesCleartextTraffic="true"
         android:allowBackup="false"
         android:icon="@drawable/mvc_icon"
         android:roundIcon="@drawable/mvc_icon_round"

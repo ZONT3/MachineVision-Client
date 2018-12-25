@@ -3,6 +3,9 @@ package ru.zont.mvc;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -46,30 +49,25 @@ class Client {
     }
 
     static String sendJsonForResult(String json) throws IOException {
-        return sendJsonForResult(json, /*null,*/ TIMEOUT);
+        return sendJsonForResult(json, TIMEOUT);
     }
 
-//    static String sendJsonForResult(String json, String expectedResponse) throws IOException {
-//        return sendJsonForResult(json, expectedResponse, TIMEOUT);
-//    }
-
-    static String sendJsonForResult(String json, /*String expectedResponse,*/  int timeout) throws IOException {
+    static String sendJsonForResult(String json, int timeout) throws IOException {
         try {
             connect(ip, port);
             if (socket == null) throw new IOException("Socket is null");
             socket.setSoTimeout(timeout);
-
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            out.println(json);
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String response = in.readLine();
-            if (response == null || response.equals(""))
-                throw new IOException(String.format("Incorrect response (%s)", response));
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            DataInputStream dis = new DataInputStream(socket.getInputStream());
+            dos.write(json.getBytes("UTF-8"));
+            StringBuilder response = new StringBuilder();
+            while (response.toString().equals("")) {
+                response.append(dis.readUTF());
+            }
+            if (response.toString().equals(""))
+                throw new IOException(String.format("Incorrect response (%s)", response.toString()));
             Log.d("CLIENT", "Answer:\n\t" + response);
-            return response;
-        } catch (IOException e) {
-            throw e;
+            return response.toString();
         } finally {
             disconnect();
         }
