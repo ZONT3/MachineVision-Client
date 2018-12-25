@@ -22,6 +22,7 @@ import com.bumptech.glide.request.target.Target;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Random;
 
 public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> {
     static class VH extends RecyclerView.ViewHolder {
@@ -42,6 +43,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
     private QueryItemAdapter.OnClickListener onClickListener;
     private WeakReference<RecyclerView> rv;
     private int firstLoaded = 0;
+    private int firstNeeded;
 
     QueryItemAdapter(RecyclerView rv, ArtifactObject.Query query,
                      OnClickListener onClickListener, OnLongClickListener onLongClickListener) {
@@ -52,6 +54,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
         this.onLongClickListener = onLongClickListener;
         this.onClickListener.setAdapter(this);
         this.onLongClickListener.setAdapter(this);
+        firstNeeded = query.whitelist.size();
     }
 
     @NonNull
@@ -116,6 +119,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
         notifyItemRangeChanged(pos, query.whitelist.size());
     }
 
+    private static ArrayList<Long> queue = new ArrayList<>();
     void loadMore(EditActivity activity, int count) {
         int pos = query.whitelist.size();
         for (int i = 0; i < count; i++)
@@ -123,8 +127,13 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
         notifyItemRangeInserted(pos, count);
 
         new Thread(() -> {
+            long id = new Random().nextLong();
+            queue.add(id);
+            while (!(queue.size() <= 0) || queue.get(0).equals(id))
+                try { Thread.sleep(300); } catch (InterruptedException ignored) { return; }
+
             Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-            while (firstLoaded < 4) {
+            while (firstLoaded < firstNeeded) {
                 try { Thread.sleep(500); }
                 catch (InterruptedException e) { e.printStackTrace(); }
             }
@@ -152,6 +161,7 @@ public class QueryItemAdapter extends RecyclerView.Adapter<QueryItemAdapter.VH> 
 
                     for (Integer pos : removed) notifyItemRemoved(pos);
                     notifyItemRangeChanged(pos, count);
+                    if (queue.size() > 0) queue.remove(0);
                 }
             }, query.title, count, offset);
             offset += count;

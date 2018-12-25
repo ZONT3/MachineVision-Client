@@ -279,6 +279,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         svst.setImageResource(android.R.drawable.presence_invisible);
+        main_pb.setVisibility(View.VISIBLE);
         idle = true;
 
         startCheckers();
@@ -289,7 +290,7 @@ public class MainActivity extends AppCompatActivity {
         Runnable lanCheckerRunnable = () -> {
             Thread.currentThread().setPriority(2);
             Log.d("LanChecker", "Started");
-            while (Thread.currentThread().isAlive() && !Thread.currentThread().isInterrupted()) {
+            while (Thread.currentThread().isAlive() && !Thread.interrupted()) {
                 try {
                     Context context = MainActivity.this;
 
@@ -338,7 +339,7 @@ public class MainActivity extends AppCompatActivity {
 
             boolean first = true;
             boolean wasConnected = false;
-            while (Thread.currentThread().isAlive() && !Thread.currentThread().isInterrupted()) {
+            while (Thread.currentThread().isAlive() && !Thread.interrupted()) {
                 if (idle) {
                     Throwable result = Client.tryConnection(ip, port);
 
