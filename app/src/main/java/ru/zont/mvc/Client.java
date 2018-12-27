@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Random;
@@ -58,16 +59,16 @@ class Client {
             if (socket == null) throw new IOException("Socket is null");
             socket.setSoTimeout(timeout);
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            DataInputStream dis = new DataInputStream(socket.getInputStream());
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
             dos.write(json.getBytes("UTF-8"));
-            StringBuilder response = new StringBuilder();
-            while (response.toString().equals("")) {
-                response.append(dis.readUTF());
-            }
-            if (response.toString().equals(""))
-                throw new IOException(String.format("Incorrect response (%s)", response.toString()));
+            dos.flush();
+            socket.shutdownOutput();
+            String response = in.readLine();
+            if (response == null || response.equals(""))
+                throw new IOException(String.format("Incorrect response (%s)", response));
             Log.d("CLIENT", "Answer:\n\t" + response);
-            return response.toString();
+            return response;
         } finally {
             disconnect();
         }
