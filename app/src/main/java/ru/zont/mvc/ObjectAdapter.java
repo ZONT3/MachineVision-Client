@@ -84,7 +84,8 @@ public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder
         switch (object.getLastActType()) {
             case ArtifactObject.ACTION.CREATED: act = R.string.artobj_created; break;
             case ArtifactObject.ACTION.EDITED: act = R.string.artobj_edited; break;
-            case ArtifactObject.ACTION.LEARNED: act = R.string.artobj_learned; break;
+            case ArtifactObject.ACTION.STARTED_TRAINING: act = R.string.artobj_started; break;
+            case ArtifactObject.ACTION.TRAINED: act = R.string.artobj_learned; break;
         }
         holder.mLastact.setText(context.getString(act, format.format(calendar.getTime())));
 

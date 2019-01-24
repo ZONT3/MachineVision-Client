@@ -15,7 +15,7 @@ public class ArtifactObject implements Parcelable {
         static final int ERROR_LEARN = -1;
         static final int READY_TL = 0;
         static final int DOWNLOADING = 1;
-        static final int LEARNING = 2;
+        static final int TRAINING = 2;
         static final int READY_FU = 3;
         static final int OUTDATED = 4;
     }
@@ -23,7 +23,8 @@ public class ArtifactObject implements Parcelable {
     abstract class ACTION {
         static final int CREATED = 0;
         static final int EDITED = 1;
-        static final int LEARNED = 2;
+        static final int STARTED_TRAINING = 2;
+        static final int TRAINED = 3;
     }
 
     private String id = new RandomString(16, new Random()).nextString();

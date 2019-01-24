@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -34,7 +35,6 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 
@@ -87,9 +87,10 @@ public class MainActivity extends AppCompatActivity {
             TextView learned = v.findViewById(R.id.objpts_learned);
             ConstraintLayout edit = v.findViewById(R.id.objpts_btnlay_edit);
             ConstraintLayout delete = v.findViewById(R.id.objpts_btnlay_delete);
+            Button train = v.findViewById(R.id.objpts_btnlay_train);
 
             boolean available = object.getStatus() != ArtifactObject.STATUS.DOWNLOADING
-                    && object.getStatus() != ArtifactObject.STATUS.LEARNING;
+                    && object.getStatus() != ArtifactObject.STATUS.TRAINING;
             edit.setEnabled(available);
             delete.setEnabled(available);
             swith.setEnabled(available);
@@ -135,6 +136,22 @@ public class MainActivity extends AppCompatActivity {
                     getList();
                 }).start();
             });
+            train.setVisibility(object.getStatus() == ArtifactObject.STATUS.READY_TL ? View.VISIBLE : View.GONE);
+            train.setOnClickListener(v1 -> {
+                dialog.dismiss();
+                new Thread(() -> {
+                    HashMap<String, String> request = new HashMap<>();
+                    request.put("request_code", "train_model");
+                    request.put("object_id", object.getId());
+                    try {
+                        String resp = Client.sendJsonForResult(new Gson().toJson(request));
+                        //if (resp != null && resp.equals("success"))
+                            getList();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+            });
             swith.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 object.setEnabled(isChecked);
                 new Thread(() -> {
@@ -160,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         switch (object.getStatus()) {
             case ArtifactObject.STATUS.READY_TL: status = context.getString(R.string.artobj_status_rtl); break;
             case ArtifactObject.STATUS.DOWNLOADING: status = context.getString(R.string.artobj_status_dl); break;
-            case ArtifactObject.STATUS.LEARNING: status = context.getString(R.string.artobj_status_lrn); break;
+            case ArtifactObject.STATUS.TRAINING: status = context.getString(R.string.artobj_status_lrn); break;
             case ArtifactObject.STATUS.READY_FU: status = context.getString(R.string.artobj_status_rfu); break;
             case ArtifactObject.STATUS.OUTDATED: status = context.getString(R.string.artobj_status_odt); break;
             case ArtifactObject.STATUS.ERROR_LEARN: status = context.getString(R.string.artobj_status_errl); break;

@@ -215,4 +215,17 @@
             app:layout_constraintTop_toTopOf="parent" />
     </android.support.constraint.ConstraintLayout>
 
+    <Button
+        android:id="@+id/objpts_btnlay_train"
+        style="@android:style/Widget.Material.Button.Borderless.Colored"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Train"
+        android:textAlignment="textStart"
+        android:textColor="@android:color/holo_green_light"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/objpts_btnlay_delete" />
+
 </android.support.constraint.ConstraintLayout>

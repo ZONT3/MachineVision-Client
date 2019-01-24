@@ -18,10 +18,10 @@
     <string name="artobj_status_undefined">UNDEFINED</string>
     <string name="artobj_status_rtl">Ready to learn</string>
     <string name="artobj_status_dl">Downloading imgs</string>
-    <string name="artobj_status_lrn">Learning</string>
+    <string name="artobj_status_lrn">Training</string>
     <string name="artobj_status_rfu">Ready</string>
     <string name="artobj_status_odt">Outdated</string>
-    <string name="artobj_status_errl">Learning error</string>
+    <string name="artobj_status_errl">Training error</string>
     <string name="artobj_status_err">Error</string>
     <string name="artobj_edited">Edited %s</string>
     <string name="query_deletediag">Are You sure?</string>
@@ -34,7 +34,7 @@
     <string name="main_op_total">Total Images:</string>
     <string name="main_op_unknown">Unknown</string>
     <string name="main_op_created">Created:</string>
-    <string name="main_op_learned">Learned:</string>
+    <string name="main_op_learned">Trained:</string>
     <string name="main_op_edit">Edit</string>
     <string name="main_op_delete">Delete</string>
     <string name="blank" />
@@ -55,7 +55,8 @@
     <string name="main_port">PORT</string>
     <string name="query_more_count">Count</string>
     <string name="edit_svresperr"><![CDATA[Error occurred when contacting server. Try to request < 50 images.]]></string>
-    <string name="edit_err_item_load">Some item has failed to display, removing it...</string>
+    <string name="edit_err_item_load">Some item has failed to display, removing it…</string>
     <string name="edit_err_save">Error occurred when contacting server.</string>
     <string name="edit_err_noquer">There is no queries</string>
+    <string name="artobj_started">Training since %s</string>
 </resources>
