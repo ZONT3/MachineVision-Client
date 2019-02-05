@@ -16,7 +16,7 @@
     <string name="edit_setrtc">Count to get</string>
     <string name="edit_title">Title</string>
     <string name="artobj_status_undefined">UNDEFINED</string>
-    <string name="artobj_status_rtl">Ready to learn</string>
+    <string name="artobj_status_rtl">Ready to train</string>
     <string name="artobj_status_dl">Downloading imgs</string>
     <string name="artobj_status_lrn">Training</string>
     <string name="artobj_status_rfu">Ready</string>
@@ -60,4 +60,5 @@
     <string name="edit_err_noquer">There is no queries</string>
     <string name="artobj_started">Training since %s</string>
     <string name="main_meta">%d images</string>
+    <string name="main_op_train">Train</string>
 </resources>
