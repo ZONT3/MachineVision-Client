@@ -36,7 +36,6 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.util.Calendar;
@@ -148,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
                     request.put("request_code", "train_model");
                     request.put("object_id", object.getId());
                     try {
-                        String resp = Client.sendJsonForResult(new Gson().toJson(request));
+                        Client.sendJsonForResult(new Gson().toJson(request));
                         //if (resp != null && resp.equals("success"))
                             getList();
                     } catch (IOException e) {
