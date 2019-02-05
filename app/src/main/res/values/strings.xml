@@ -59,4 +59,5 @@
     <string name="edit_err_save">Error occurred when contacting server.</string>
     <string name="edit_err_noquer">There is no queries</string>
     <string name="artobj_started">Training since %s</string>
+    <string name="main_meta">%d images</string>
 </resources>
