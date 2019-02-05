@@ -1,10 +1,12 @@
 package ru.zont.mvc;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -34,6 +36,8 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -247,7 +251,35 @@ public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("EmptyMethod")
     @SuppressLint("StaticFieldLeak")
     public void onClickGuess(View v) {
+        EditText view = new EditText(this);
+        view.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        new AlertDialog.Builder(this)
+                .setTitle("Enter URL of image")
+                .setView(view)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    ProgressDialog pd = new ProgressDialog(this);
+                    pd.setCancelable(false);
+                    pd.create();
+                    pd.show();
 
+                    new Thread(() -> {
+                        HashMap<String, String> request = new HashMap<>();
+                        request.put("request_code", "guess");
+                        request.put("url", view.getText().toString());
+
+                        try {
+                            String response = Client.sendJsonForResult(new Gson().toJson(request), 1200);
+                            URL url = new URL(response);
+                            startActivity(new Intent(Intent.ACTION_VIEW)
+                                    .setDataAndType(Uri.parse(url.toString()), "image/*"));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            pd.dismiss();
+                        }
+                    }).start();
+                })
+                .create().show();
     }
 
     @Override
