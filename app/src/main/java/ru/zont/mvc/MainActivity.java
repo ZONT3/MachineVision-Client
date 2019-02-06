@@ -27,10 +27,20 @@ import java.util.Collections;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
+	private static final int CONSTATUS_UNKNOWN = -1;
+	private static final int CONSTATUS_FAIL = 0;
+	private static final int CONSTATUS_SUCCESS = 1;
 
     private ObjectAdapter adapter;
 
     private ProgressBar pb;
+
+    private Thread checkerThread;
+    private Thread seekerThread;
+
+    private String ip;
+    private int port;
+    private int connectionStatus;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -43,23 +53,94 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         pb = findViewById(R.id.main_pb);
+
+        //TODO get ip from sharedPrefs
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        //TODO CheckerThreads and getList usage
+        connectionStatus = CONSTATUS_UNKNOWN;
+
+        Thread oldThread = null;
+        if (checkerThread != null 
+        		&& checkerThread.isAlive() 
+        		&& !checkerThread.isInterrupted())
+    		return;
+    	else if (checkerThread != null && checkerThread.isInterrupted())
+    		oldThread = checkerThread;
+
+        checkerThread = new Thread(() -> {
+        	while (!Thread.currentThread().isInterrupted()) {
+        		try {
+        			while (oldThread != null && oldThread.isAlive())
+        				Thread.sleep(50);
+        			oldThread = null;
+
+        			if (Client.tryConnection(ip, port) == null) {
+        				if (connectionStatus != CONSTATUS_SUCCESS)
+        					runOnUiThread(this::onConnectionResumed);
+        				connectionStatus = CONSTATUS_SUCCESS;
+        			} else {
+        				if (connectionStatus != CONSTATUS_FAIL)
+        					runOnUiThread(this::onConnectionFailed);
+        				connectionStatus = CONSTATUS_FAIL;
+        			}
+
+        			Thread.sleep(300);
+        		} catch (InterruptedException e) {
+        			Log.d("CheckerThread", "Checker interrupted on sleep");
+        			break;
+        		}
+        	}
+        });
+        checkerThread.setPriority(3);
+        checkerThread.start();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        if (checkerThread != null)
+        	checkerThread.interrupt();
+        if (seekerThread != null)
+        	seekerThread.interrupt();
+    }
+
+    private void onConnectionResumed() {
+    	//TODO svst changes
+    	getList();
+    }
+
+    private void onConnectionFailed() {
+    	//TODO svst changes
+    	adapter.clear();
+
+    	Thread oldThread = null;
+    	if (seekerThread != null && !seekerThread.isInterrupted()) {
+    		seekerThread.interrupt();
+    		oldThread = seekerThread;
+    	}
+
+    	seekerThread = new Thread(() -> {
+    		while (!Thread.currentThread().isInterrupted()) {
+	    		try {
+	    			//TODO scan for ips
+	    		} catch (InterruptedException e) {
+	    			Log.d("SeekerThread", "Interrupted while sleep");
+	    			break;
+	    		}
+    		}
+    	});
+    	seekerThread.setPriority(Thread.MIN_PRIORITY);
+    	seekerThread.start();
     }
 
     private void getList() {
         new ListGetter(new ListGetter.AsyncRunnable() {
             @Override
             public void onPreExecute() {
+            	adapter.clear();
                 pb.setVisibility(View.VISIBLE);
             }
 
@@ -134,6 +215,8 @@ public class MainActivity extends AppCompatActivity {
             private ArtifactObject[] objects;
         }
     }
+
+    //TODO onCreateOptionsMenu
 
     public void onClickGuess(View v) {
         EditText view = new EditText(this);
