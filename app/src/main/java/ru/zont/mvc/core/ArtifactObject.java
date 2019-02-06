@@ -118,9 +118,9 @@ public class ArtifactObject implements Parcelable {
             whitelist = new ArrayList<>();
         }
 
-        String title;
-        ArrayList<String> blacklist;
-        ArrayList<String> whitelist;
+        public String title;
+        public ArrayList<String> blacklist;
+        public ArrayList<String> whitelist;
 
         @Override
         public boolean equals(Object obj) {

@@ -62,4 +62,5 @@
     <string name="main_meta">%d images</string>
     <string name="main_op_train">Train</string>
     <string name="main_serverip">Server IP</string>
+    <string name="edit_custq">Uploaded by User</string>
 </resources>
