@@ -3,27 +3,36 @@ package ru.zont.mvc;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.format.Formatter;
+import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
@@ -34,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private ObjectAdapter adapter;
 
     private ProgressBar pb;
+    private ImageView svst;
 
     private Thread checkerThread;
     private Thread seekerThread;
@@ -53,8 +63,11 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         pb = findViewById(R.id.main_pb);
+        svst = findViewById(R.id.main_svst);
 
-        //TODO get ip from sharedPrefs
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        ip = sp.getString("ip", "dltngz.ddns.net");
+        port = sp.getInt("port", 1337);
     }
 
     @Override
@@ -70,12 +83,12 @@ public class MainActivity extends AppCompatActivity {
     	else if (checkerThread != null && checkerThread.isInterrupted())
     		oldThread = checkerThread;
 
+        Thread finalOldThread = oldThread;
         checkerThread = new Thread(() -> {
         	while (!Thread.currentThread().isInterrupted()) {
         		try {
-        			while (oldThread != null && oldThread.isAlive())
+        			while (finalOldThread != null && finalOldThread.isAlive())
         				Thread.sleep(50);
-        			oldThread = null;
 
         			if (Client.tryConnection(ip, port) == null) {
         				if (connectionStatus != CONSTATUS_SUCCESS)
@@ -108,12 +121,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onConnectionResumed() {
-    	//TODO svst changes
+        svst.setImageResource(android.R.drawable.presence_online);
     	getList();
     }
 
     private void onConnectionFailed() {
-    	//TODO svst changes
+    	svst.setImageResource(android.R.drawable.presence_offline);
     	adapter.clear();
 
     	Thread oldThread = null;
@@ -122,14 +135,50 @@ public class MainActivity extends AppCompatActivity {
     		oldThread = seekerThread;
     	}
 
-    	seekerThread = new Thread(() -> {
+        Thread finalOldThread = oldThread;
+        seekerThread = new Thread(() -> {
+            LOOPER:
     		while (!Thread.currentThread().isInterrupted()) {
 	    		try {
-	    			//TODO scan for ips
+	    		    while (finalOldThread != null && !finalOldThread.isInterrupted())
+	    		        Thread.sleep(50);
+
+                    ConnectivityManager cm = (ConnectivityManager) MainActivity.this
+                            .getSystemService(Context.CONNECTIVITY_SERVICE);
+                    NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                    WifiManager wm = (WifiManager) MainActivity.this
+                            .getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+                    WifiInfo connectionInfo = wm.getConnectionInfo();
+                    int ipAddress = connectionInfo.getIpAddress();
+                    @SuppressWarnings("deprecation") String ipString = Formatter.formatIpAddress(ipAddress);
+
+
+                    Log.d("LanScanner", "activeNetwork: " + String.valueOf(activeNetwork));
+                    Log.d("LanScanner", "ipString: " + String.valueOf(ipString));
+
+                    String prefix = ipString.substring(0, ipString.lastIndexOf(".") + 1);
+                    Log.d("LanScanner", "prefix: " + prefix);
+
+                    for (int i = 0; i < 255; i++) {
+                        if (Thread.currentThread().isInterrupted())
+                            break LOOPER;
+
+                        String testIp = prefix + String.valueOf(i);
+
+                        InetAddress address = InetAddress.getByName(testIp);
+                        String hostName = address.getCanonicalHostName();
+
+                        if (!hostName.contains(testIp))
+                            if (Client.tryConnection(testIp, port) == null) {
+                                ip = testIp;
+                                Client.setup(testIp, port);
+                            }
+                    }
 	    		} catch (InterruptedException e) {
 	    			Log.d("SeekerThread", "Interrupted while sleep");
 	    			break;
-	    		}
+	    		} catch (UnknownHostException ignored) { }
     		}
     	});
     	seekerThread.setPriority(Thread.MIN_PRIORITY);
@@ -181,8 +230,7 @@ public class MainActivity extends AppCompatActivity {
             HashMap<String, String> request = new HashMap<>();
             request.put("request_code", "list_objects");
             try {
-                return new Gson().fromJson(Client.sendJsonForResult(
-                	new Gson().toJson(request)), ListResponse.class).objects;
+                return new Gson().fromJson(Client.sendJsonForResult(new Gson().toJson(request)), ListResponse.class).objects;
             } catch (IOException e) {
                 e.printStackTrace();
                 this.e = e;
@@ -217,7 +265,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //TODO onCreateOptionsMenu
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 
     public void onClickGuess(View v) {
         EditText view = new EditText(this);
