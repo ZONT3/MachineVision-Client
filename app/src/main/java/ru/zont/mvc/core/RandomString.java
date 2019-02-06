@@ -3,12 +3,12 @@ import java.util.Objects;
 import java.util.Random;
 
 @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-class RandomString {
+public class RandomString {
 
     /**
      * Generate a random string.
      */
-    String nextString() {
+    public String nextString() {
         for (int idx = 0; idx < buf.length; ++idx)
             buf[idx] = symbols[random.nextInt(symbols.length)];
         return new String(buf);
@@ -40,7 +40,7 @@ class RandomString {
      * Create an alphanumeric string generator.
      */
     @SuppressWarnings("SameParameterValue")
-    RandomString(int length, Random random) {
+    public RandomString(int length, Random random) {
         this(length, random, alphanum);
     }
 

@@ -50,26 +50,12 @@ public class ArtifactObject implements Parcelable {
         created = lastAct;
         learned = -1;
         enabled = true;
+        thumbnail = queries.get(0).whitelist.get(0);
         //this.customImages = customImages;
     }
 
     public int getQueriesSize() {
         return queries.size();
-    }
-
-    public int getTotalBlacklisted() {
-        int res = 0;
-        for (Query q : queries)
-            if (q.blacklist != null)
-                res += q.blacklist.size();
-        return res;
-    }
-
-    public ArrayList<String> getBlacklist() {
-        ArrayList<String> res = new ArrayList<>();
-        for (Query q : queries)
-            res.addAll(q.blacklist);
-        return res;
     }
 
     public String getId() { return id; }
@@ -112,21 +98,18 @@ public class ArtifactObject implements Parcelable {
     }
 
     public static class Query implements Parcelable {
-        Query(String title) {
+        public Query(String title) {
             this.title = title;
-            blacklist = new ArrayList<>();
             whitelist = new ArrayList<>();
         }
 
         public String title;
-        public ArrayList<String> blacklist;
         public ArrayList<String> whitelist;
 
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof Query)) return super.equals(obj);
             return Objects.equals(title, ((Query) obj).title)
-                    && Objects.equals(blacklist, ((Query) obj).blacklist)
                     && Objects.equals(whitelist, ((Query) obj).whitelist);
         }
 
@@ -144,7 +127,6 @@ public class ArtifactObject implements Parcelable {
 
         private Query(Parcel p) {
             title = p.readString();
-            blacklist = p.readArrayList(String.class.getClassLoader());
             whitelist = p.readArrayList(String.class.getClassLoader());
         }
 
@@ -156,7 +138,6 @@ public class ArtifactObject implements Parcelable {
         @Override
         public void writeToParcel(Parcel dest, int flags) {
             dest.writeString(title);
-            dest.writeList(blacklist);
             dest.writeList(whitelist);
         }
     }
@@ -184,6 +165,12 @@ public class ArtifactObject implements Parcelable {
                 created == object.created &&
                 learned == object.learned &&
                 enabled == object.enabled;
+    }
+
+    public boolean dataEquals(String title, ArrayList<Query> queries, String thumbnail) {
+        return title.equals(this.title)
+                && queries.equals(this.queries)
+                && thumbnail.equals(this.thumbnail);
     }
 
     public boolean dataEqualsExcId(ArtifactObject object) {
