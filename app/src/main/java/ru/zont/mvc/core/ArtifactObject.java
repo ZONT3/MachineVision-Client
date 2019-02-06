@@ -1,4 +1,4 @@
-package ru.zont.mvc;
+package ru.zont.mvc.core;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -10,21 +10,21 @@ import java.util.Random;
 
 @SuppressWarnings({"unchecked", "CanBeFinal"})
 public class ArtifactObject implements Parcelable {
-    abstract class STATUS {
-        static final int ERROR = -99;
-        static final int ERROR_LEARN = -1;
-        static final int READY_TL = 0;
-        static final int DOWNLOADING = 1;
-        static final int TRAINING = 2;
-        static final int READY_FU = 3;
-        static final int OUTDATED = 4;
+    public abstract class STATUS {
+        public static final int ERROR = -99;
+        public static final int ERROR_LEARN = -1;
+        public static final int READY_TL = 0;
+        public static final int DOWNLOADING = 1;
+        public static final int TRAINING = 2;
+        public static final int READY_FU = 3;
+        public static final int OUTDATED = 4;
     }
 
-    abstract class ACTION {
-        static final int CREATED = 0;
-        static final int EDITED = 1;
-        static final int STARTED_TRAINING = 2;
-        static final int TRAINED = 3;
+    public abstract class ACTION {
+        public static final int CREATED = 0;
+        public static final int EDITED = 1;
+        public static final int STARTED_TRAINING = 2;
+        public static final int TRAINED = 3;
     }
 
     private String id = new RandomString(16, new Random()).nextString();
@@ -41,7 +41,7 @@ public class ArtifactObject implements Parcelable {
 
     //private ArrayList<File> customImages;
 
-    ArtifactObject(String title, ArrayList<Query> queries/*, ArrayList<File> customImages*/) {
+    public ArtifactObject(String title, ArrayList<Query> queries/*, ArrayList<File> customImages*/) {
         this.title = title;
         this.queries = queries;
         status = STATUS.READY_TL;
@@ -53,11 +53,11 @@ public class ArtifactObject implements Parcelable {
         //this.customImages = customImages;
     }
 
-    int getQueriesSize() {
+    public int getQueriesSize() {
         return queries.size();
     }
 
-    int getTotalBlacklisted() {
+    public int getTotalBlacklisted() {
         int res = 0;
         for (Query q : queries)
             if (q.blacklist != null)
@@ -65,45 +65,45 @@ public class ArtifactObject implements Parcelable {
         return res;
     }
 
-    ArrayList<String> getBlacklist() {
+    public ArrayList<String> getBlacklist() {
         ArrayList<String> res = new ArrayList<>();
         for (Query q : queries)
             res.addAll(q.blacklist);
         return res;
     }
 
-    String getId() { return id; }
+    public String getId() { return id; }
 
-    String getTitle() { return title; }
+    public String getTitle() { return title; }
 
-    ArrayList<Query> getQueries() { return queries; }
+    public ArrayList<Query> getQueries() { return queries; }
 
-    void setThumbnail(String thumbnail) { this.thumbnail = thumbnail; }
+    public void setThumbnail(String thumbnail) { this.thumbnail = thumbnail; }
 
-    String getThumbnail() { return thumbnail; }
+    public String getThumbnail() { return thumbnail; }
 
-    int getStatus() { return status; }
+    public int getStatus() { return status; }
 
-    int getLastActType() { return lastActType; }
+    public int getLastActType() { return lastActType; }
 
-    long getLastAct() { return lastAct; }
+    public long getLastAct() { return lastAct; }
 
-    long getCreated() { return created; }
+    public long getCreated() { return created; }
 
-    long getLearned() { return learned; }
+    public long getLearned() { return learned; }
 
-    int getTotal() {
+    public int getTotal() {
         int res = 0;
         for (Query q : queries)
             res += q.whitelist.size();
         return res;
     }
 
-    void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
-    boolean isEnabled() { return enabled; }
+    public boolean isEnabled() { return enabled; }
 
-    void edit(String title, ArrayList<Query> queries) {
+    public void edit(String title, ArrayList<Query> queries) {
         this.title = title;
         this.queries = queries;
         lastActType = ACTION.EDITED;
@@ -173,7 +173,7 @@ public class ArtifactObject implements Parcelable {
         else return super.equals(obj);
     }
 
-    boolean dataEquals(ArtifactObject object) {
+    public boolean dataEquals(ArtifactObject object) {
         return Objects.equals(id, object.id) &&
                 Objects.equals(title, object.title) &&
                 Objects.equals(queries, object.queries) &&
@@ -186,7 +186,7 @@ public class ArtifactObject implements Parcelable {
                 enabled == object.enabled;
     }
 
-    boolean dataEqualsExcId(ArtifactObject object) {
+    public boolean dataEqualsExcId(ArtifactObject object) {
         return Objects.equals(title, object.title) &&
                 Objects.equals(queries, object.queries) &&
                 Objects.equals(thumbnail, object.thumbnail) &&

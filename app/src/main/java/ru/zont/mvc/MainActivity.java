@@ -1,5 +1,6 @@
 package ru.zont.mvc;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -20,11 +21,16 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.Formatter;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -33,7 +39,13 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.HashMap;
+
+import ru.zont.mvc.core.ArtifactObject;
+import ru.zont.mvc.core.Client;
+import ru.zont.mvc.core.Request;
 
 public class MainActivity extends AppCompatActivity {
 	private static final int CONSTATUS_UNKNOWN = -1;
@@ -61,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.main_recycler);
         recyclerView.setAdapter(adapter = new ObjectAdapter());
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter.setOnItemClickListener(this::onItemClick);
 
         pb = findViewById(R.id.main_pb);
         svst = findViewById(R.id.main_svst);
@@ -102,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
         			Thread.sleep(300);
         		} catch (InterruptedException e) {
-        			Log.d("CheckerThread", "Checker interrupted on sleep");
+        			Log.d("CheckerThread", "Interrupted while being sleeping");
         			break;
         		}
         	}
@@ -122,6 +135,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void onConnectionResumed() {
         svst.setImageResource(android.R.drawable.presence_online);
+
+        if (seekerThread != null) seekerThread.interrupt();
     	getList();
     }
 
@@ -160,29 +175,57 @@ public class MainActivity extends AppCompatActivity {
                     String prefix = ipString.substring(0, ipString.lastIndexOf(".") + 1);
                     Log.d("LanScanner", "prefix: " + prefix);
 
-                    for (int i = 0; i < 255; i++) {
+                    for (int i = 0; i < 20; i++) {
                         if (Thread.currentThread().isInterrupted())
                             break LOOPER;
-
-                        String testIp = prefix + String.valueOf(i);
-
-                        InetAddress address = InetAddress.getByName(testIp);
-                        String hostName = address.getCanonicalHostName();
-
-                        if (!hostName.contains(testIp))
-                            if (Client.tryConnection(testIp, port) == null) {
-                                ip = testIp;
-                                Client.setup(testIp, port);
-                            }
+                        checkIP(prefix, i);
+                    }
+                    for (int i = 40; i < 60; i++) {
+                        if (Thread.currentThread().isInterrupted())
+                            break LOOPER;
+                        checkIP(prefix, i);
+                    }
+                    for (int i = 100; i < 120; i++) {
+                        if (Thread.currentThread().isInterrupted())
+                            break LOOPER;
+                        checkIP(prefix, i);
+                    }
+                    for (int i = 20; i < 40; i++) {
+                        if (Thread.currentThread().isInterrupted())
+                            break LOOPER;
+                        checkIP(prefix, i);
+                    }
+                    for (int i = 60; i < 100; i++) {
+                        if (Thread.currentThread().isInterrupted())
+                            break LOOPER;
+                        checkIP(prefix, i);
+                    }
+                    for (int i = 120; i < 255; i++) {
+                        if (Thread.currentThread().isInterrupted())
+                            break LOOPER;
+                        checkIP(prefix, i);
                     }
 	    		} catch (InterruptedException e) {
-	    			Log.d("SeekerThread", "Interrupted while sleep");
+	    			Log.d("SeekerThread", "Interrupted while being sleeping");
 	    			break;
 	    		} catch (UnknownHostException ignored) { }
     		}
     	});
     	seekerThread.setPriority(Thread.MIN_PRIORITY);
     	seekerThread.start();
+    }
+
+    private void checkIP(String prefix, int i) throws UnknownHostException {
+        String testIp = prefix + String.valueOf(i);
+
+        InetAddress address = InetAddress.getByName(testIp);
+        String hostName = address.getCanonicalHostName();
+
+        if (!hostName.contains(testIp))
+            if (Client.tryConnection(testIp, port) == null) {
+                ip = testIp;
+                Client.setup(ip, port);
+            }
     }
 
     private void getList() {
@@ -271,6 +314,34 @@ public class MainActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
+    @SuppressLint("SetTextI18n")
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.main_menu_editip:
+                @SuppressLint("InflateParams") View layout = LayoutInflater.from(this)
+                        .inflate(R.layout.dialog_ip, null);
+                EditText ipField = layout.findViewById(R.id.main_ipdiag_ip);
+                EditText portField = layout.findViewById(R.id.main_ipdiag_port);
+                ipField.setText(ip);
+                portField.setText(port+"");
+
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.main_serverip)
+                        .setView(layout)
+                        .setPositiveButton(android.R.string.ok, (i1,i2) -> {
+                            ip = ipField.getText().toString();
+                            port = Integer.valueOf(portField.getText().toString());
+                            PreferenceManager.getDefaultSharedPreferences(this).edit()
+                                    .putString("ip", ip)
+                                    .putInt("port", port)
+                                    .apply();
+                        }).create().show();
+                return true;
+            default: return super.onOptionsItemSelected(item);
+        }
+    }
+
     public void onClickGuess(View v) {
         EditText view = new EditText(this);
         view.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
@@ -301,6 +372,89 @@ public class MainActivity extends AppCompatActivity {
                     }).start();
                 })
                 .create().show();
+    }
+
+    public void onClickAdd(View v) {
+        startActivity(new Intent(this, EditActivity.class));
+    }
+
+    public void onItemClick(ArtifactObject item) {
+        @SuppressLint("InflateParams") View root = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_objectpropts, null);
+
+        TextView title = root.findViewById(R.id.objpts_title);
+        TextView status = root.findViewById(R.id.objpts_status);
+        TextView queries = root.findViewById(R.id.objpts_queries);
+        TextView total = root.findViewById(R.id.objpts_total);
+        TextView created = root.findViewById(R.id.objpts_created);
+        TextView trained = root.findViewById(R.id.objpts_learned);
+        Button train = root.findViewById(R.id.objpts_train);
+        Button edit = root.findViewById(R.id.objpts_edit);
+        Button delete = root.findViewById(R.id.objpts_delete);
+        Switch svvitch = root.findViewById(R.id.objpts_switch);
+
+        title.setText(item.getTitle());
+        status.setText(getStatusString(item, this));
+        queries.setText(item.getQueriesSize());
+        total.setText(item.getTotal());
+        created.setText(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG)
+                .format(new Date(item.getCreated())));
+        trained.setText("---");
+        svvitch.setChecked(item.isEnabled());
+
+        boolean busy = item.getStatus() == ArtifactObject.STATUS.DOWNLOADING
+                || item.getStatus() == ArtifactObject.STATUS.TRAINING;
+        svvitch.setEnabled(!busy);
+        train.setEnabled(!busy);
+        edit.setEnabled(!busy);
+        delete.setEnabled(!busy);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(root).create();
+
+        train.setOnClickListener(v -> {
+            dialog.dismiss();
+            new Thread(() -> {
+                try {
+                    Client.sendJsonForResult(Request.create("train_model")
+                            .put("object_id", item.getId()).toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show());
+                }
+            }).start();
+        });
+        edit.setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(this, EditActivity.class)
+                    .putExtra("object", item));
+        });
+        delete.setOnClickListener(v -> {
+            dialog.dismiss();
+            new Thread(() -> {
+                try {
+                    Client.sendJsonForResult(Request.create("delete_object")
+                            .put("id", item.getId()).toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show());
+                }
+            }).start();
+        });
+        svvitch.setOnCheckedChangeListener((buttonView, isChecked) -> new Thread(() -> {
+            try {
+                Client.sendJsonForResult(Request.create("new_object")
+                        .put("artifact_object", item.getId()).toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show());
+            }
+        }).start());
+
+        dialog.show();
     }
 
     @NonNull

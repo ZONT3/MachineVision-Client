@@ -1,4 +1,4 @@
-package ru.zont.mvc;
+package ru.zont.mvc.core;
 
 import android.content.Context;
 

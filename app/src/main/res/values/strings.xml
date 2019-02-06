@@ -61,4 +61,5 @@
     <string name="artobj_started">Training since %s</string>
     <string name="main_meta">%d images</string>
     <string name="main_op_train">Train</string>
+    <string name="main_serverip">Server IP</string>
 </resources>

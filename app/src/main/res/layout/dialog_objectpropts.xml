@@ -154,13 +154,13 @@
 
     <Button
         android:id="@+id/objpts_train"
-        style="@android:style/Widget.Material.Light.Button.Borderless.Colored"
+        style="@android:style/Widget.Material.Light.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:drawableStart="@drawable/ic_baseline_storage_24px"
         android:text="@string/main_op_train"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
     <Button
@@ -168,11 +168,11 @@
         style="@android:style/Widget.Material.Button.Borderless"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
         android:drawableStart="@drawable/ic_baseline_edit_24px"
         android:text="@string/main_op_edit"
-        app:layout_constraintStart_toEndOf="@+id/objpts_train"
+        app:layout_constraintEnd_toStartOf="@+id/objpts_train"
         app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
     <Button
@@ -180,12 +180,12 @@
         style="@android:style/Widget.Material.Light.Button.Borderless.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
         android:drawableStart="@drawable/ic_baseline_delete_red"
         android:text="@string/main_op_delete"
         android:textColor="@android:color/holo_red_dark"
-        app:layout_constraintStart_toEndOf="@+id/objpts_edit"
+        app:layout_constraintEnd_toStartOf="@+id/objpts_edit"
         app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
 </android.support.constraint.ConstraintLayout>

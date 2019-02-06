@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 
+import ru.zont.mvc.core.ArtifactObject;
+
 class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.VH> {
     class VH extends RecyclerView.ViewHolder {
         private TextView title;
