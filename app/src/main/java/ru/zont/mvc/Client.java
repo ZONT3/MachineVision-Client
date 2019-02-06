@@ -40,7 +40,7 @@ class Client {
         return result;
     }
 
-    private static void connect(String ip, int port) throws IOException {
+    private static synchronized void connect(String ip, int port) throws IOException {
         long sessionId = new Random().nextLong();
         queue.add(sessionId);
         while (!(queue.size() <= 0 || queue.get(0).equals(sessionId)))
