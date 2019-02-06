@@ -181,7 +181,8 @@ public class MainActivity extends AppCompatActivity {
             HashMap<String, String> request = new HashMap<>();
             request.put("request_code", "list_objects");
             try {
-                return new Gson().fromJson(Client.sendJsonForResult(new Gson().toJson(request)), ListResponse.class).objects;
+                return new Gson().fromJson(Client.sendJsonForResult(
+                	new Gson().toJson(request)), ListResponse.class).objects;
             } catch (IOException e) {
                 e.printStackTrace();
                 this.e = e;
