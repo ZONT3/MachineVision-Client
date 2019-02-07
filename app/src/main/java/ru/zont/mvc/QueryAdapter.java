@@ -1,5 +1,6 @@
 package ru.zont.mvc;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
@@ -8,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -70,15 +72,32 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
     }
 
     void addQuery(ArtifactObject.Query q) {
+        for (DataItem item : dataset) {
+            if (item.type == DataItem.TYPE_REGULAR && item.query.title.equals(q.title))
+                return;
+            else if (item.type == DataItem.TYPE_LOADING && item.query.title.equals(q.title)) {
+                int index = dataset.indexOf(item);
+                dataset.set(index, new DataItem(q));
+                notifyItemChanged(index);
+                return;
+            }
+        }
+
         dataset.add(new DataItem(q));
         notifyItemInserted(dataset.size() - 1);
     }
 
+    void addLoadingQuery(String title) {
+        dataset.add(new DataItem(title));
+        notifyItemInserted(dataset.size() - 1);
+    }
+
+    @SuppressLint("InflateParams")
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         return new VH(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.fragment_query_item, viewGroup));
+                .inflate(R.layout.fragment_query_thumb, viewGroup, false));
     }
 
     @Override
@@ -99,9 +118,13 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
             default:
             case DataItem.TYPE_LOADING:
                 vh.pb.setVisibility(View.VISIBLE);
+                vh.title.setText(item.get().title);
                 break;
             case DataItem.TYPE_REGULAR:
+                vh.title.setText(item.get().title);
+
                 vh.resetStates();
+                vh.pb.setVisibility(View.VISIBLE);
                 vh.id = new RandomString(8, new Random()).nextString();
                 assert item.get() != null;
                 for (int j=0; j < item.get().whitelist.size() && j < vh.thumbs.length; j++) {
@@ -146,9 +169,15 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
         for (boolean b1 : holder.states)
             if (!(b = b1)) break;
         if (b) {
-            holder.pb.setVisibility(View.GONE);
-            for (ImageView iw : holder.thumbs)
+            holder.pb.startAnimation(AnimationUtils
+                    .loadAnimation(holder.itemView.getContext(), R.anim.fadeout));
+            holder.pb.postOnAnimation(() -> holder.pb.setVisibility(View.GONE));
+
+            for (ImageView iw : holder.thumbs) {
+                iw.startAnimation(AnimationUtils
+                        .loadAnimation(holder.itemView.getContext(), R.anim.fadein));
                 iw.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -173,8 +202,13 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
         private int type;
         private ArtifactObject.Query query;
 
-        private DataItem(int type) {
-            this.type = type;
+        private DataItem() {
+            type = TYPE_CUSTOM;
+        }
+
+        private DataItem(String title) {
+            query = new ArtifactObject.Query(title);
+            type = TYPE_LOADING;
         }
 
         private DataItem(@NonNull ArtifactObject.Query q) {
@@ -183,7 +217,7 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
         }
 
         ArtifactObject.Query get() {
-            return type == TYPE_REGULAR ? query : null;
+            return type != TYPE_CUSTOM ? query : null;
         }
 
         int getType() { return type; }
@@ -192,7 +226,7 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
     private static class DataSet extends ArrayList<DataItem> {
         private DataSet(ArrayList<ArtifactObject.Query> list) {
             super();
-            add(new DataItem(DataItem.TYPE_CUSTOM));
+            add(new DataItem());
             for (ArtifactObject.Query q : list)
                 add(new DataItem(q));
         }

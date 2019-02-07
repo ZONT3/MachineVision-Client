@@ -154,6 +154,13 @@ public class ArtifactObject implements Parcelable {
         else return super.equals(obj);
     }
 
+    public boolean queriesEquals(ArrayList<Query> queries) {
+        for (Query q : queries)
+            if (!this.queries.contains(q))
+                return false;
+        return true;
+    }
+
     public boolean dataEquals(ArtifactObject object) {
         return Objects.equals(id, object.id) &&
                 Objects.equals(title, object.title) &&

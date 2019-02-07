@@ -55,7 +55,7 @@ class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.VH> {
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         return new VH(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.fragment_object, viewGroup));
+                .inflate(R.layout.fragment_object, viewGroup, false));
     }
 
     @Override

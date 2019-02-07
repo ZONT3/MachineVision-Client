@@ -48,7 +48,7 @@ class AsyncGetImages extends AsyncTask<Void, Void, String[]> {
                             .put("query", query)
                             .put("rtcount", rtcount)
                             .put("offset", offset)
-                            .toString(), rtcount < 10 ? 60 : rtcount * 20);
+                            .toString(), rtcount < 10 ? 60000 : rtcount * 20000);
             HashMap<Object, Object>[] metadata = new Gson().fromJson(responseStr, Response.class).metadata;
             result = new String[metadata.length];
             for (int i = 0; i < result.length; i++)

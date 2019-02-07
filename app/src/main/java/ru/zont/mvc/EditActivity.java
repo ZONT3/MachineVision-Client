@@ -1,6 +1,7 @@
 package ru.zont.mvc;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -25,12 +26,13 @@ import ru.zont.mvc.core.Client;
 import ru.zont.mvc.core.Dimension;
 import ru.zont.mvc.core.Request;
 
+import static android.view.inputmethod.EditorInfo.IME_ACTION_DONE;
+
 public class EditActivity extends AppCompatActivity {
 
     private EditText title;
     private QueryAdapter adapter;
     private ArtifactObject toEdit;
-    private boolean edited = false;
 
     @Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -41,6 +43,13 @@ public class EditActivity extends AppCompatActivity {
                 .setDisplayHomeAsUpEnabled(true);
 
 		title = findViewById(R.id.edit_title);
+		title.setImeOptions(IME_ACTION_DONE);
+		title.setOnEditorActionListener((v, actionId, event) -> {
+		    if (actionId == IME_ACTION_DONE) {
+                startSaving();
+                return true;
+            } else return false;
+        });
 
         RecyclerView rw = findViewById(R.id.edit_list);
         rw.setAdapter(adapter = new QueryAdapter());
@@ -54,13 +63,32 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private void onItemClick(QueryAdapter.DataItem item) {
-        //TODO
+        switch (item.getType()) {
+            case QueryAdapter.DataItem.TYPE_REGULAR:
+                startActivity(new Intent(this, EditActivity.class)
+                        .putExtra("query", item.get()));
+                break;
+            case QueryAdapter.DataItem.TYPE_CUSTOM:
+
+                break;
+            default: break;
+        }
+    }
+
+    private boolean isEdited() {
+        if (toEdit == null)
+            return !(title.getText().toString().isEmpty() && adapter.getQueries().size() == 0);
+        else return !(toEdit.getTitle().equals(title.getText().toString())
+                && toEdit.queriesEquals(adapter.getQueries()));
     }
 
     public void addQuery(View v) {
         EditText text = new EditText(this);
-        text.setHint(R.string.edit_addqdiag_hint);
-        new AlertDialog.Builder(this)
+        text.setText(R.string.edit_addqdiag_hint);
+        text.setSelectAllOnFocus(true);
+        text.setImeOptions(IME_ACTION_DONE);
+
+        AlertDialog alertDialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.edit_addqdiag_title)
                 .setView(text)
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
@@ -70,9 +98,23 @@ public class EditActivity extends AppCompatActivity {
                         return;
                     }
 
+                    adapter.addLoadingQuery(query);
                     AsyncGetImages.execute(query, 8, this::onFetchImages);
                 })
-                .create().show();
+                .create();
+
+        text.setOnEditorActionListener((v1, actionId, event) -> {
+            if (event != null && actionId == IME_ACTION_DONE
+                    && alertDialog != null && alertDialog.isShowing()) {
+                alertDialog.getButton(DialogInterface.BUTTON_POSITIVE)
+                        .callOnClick();
+                return true;
+            } else return false;
+        });
+
+        alertDialog.setOnShowListener(dialog -> text.requestFocus());
+//        alertDialog.create();
+        alertDialog.show();
     }
 
     private void onFetchImages(@NonNull String query, @Nullable String[] urls, @Nullable Exception e) {
@@ -95,24 +137,9 @@ public class EditActivity extends AppCompatActivity {
         adapter.addQuery(queryInstance);
     }
 
-    private boolean canSave() {
-        if (title.getText().toString().isEmpty()) {
-            Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
-            return false;
-        }
-        if (adapter.getQueries().size() <= 0) {
-            Toast.makeText(this, R.string.edit_err_noquer, Toast.LENGTH_LONG).show();
-            return false;
-        }
-        return true;
-    }
-
     @Override
     public void onBackPressed() {
-        if (toEdit != null && !edited || toEdit == null
-                && title.getText().toString().isEmpty()
-                && adapter.getQueries().size() == 0)
-            super.onBackPressed();
+        if (!isEdited()) super.onBackPressed();
         else {
             new AlertDialog.Builder(this)
                     .setTitle(R.string.edit_save)
@@ -124,6 +151,18 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private void startSaving(DialogInterface di, int w) { startSaving(); }
+
+    private boolean canSave() {
+        if (title.getText().toString().isEmpty()) {
+            Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
+            return false;
+        }
+        if (adapter.getQueries().size() <= 0) {
+            Toast.makeText(this, R.string.edit_err_noquer, Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
+    }
 
     private void startSaving() {
         if (!canSave()) return;

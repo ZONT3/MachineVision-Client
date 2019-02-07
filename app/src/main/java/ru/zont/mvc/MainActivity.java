@@ -71,8 +71,9 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(findViewById(R.id.main_toolbar));
 
         RecyclerView recyclerView = findViewById(R.id.main_recycler);
-        recyclerView.setAdapter(adapter = new ObjectAdapter());
+        recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter = new ObjectAdapter());
         adapter.setOnItemClickListener(this::onItemClick);
 
         pb = findViewById(R.id.main_pb);
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         ip = sp.getString("ip", "dltngz.ddns.net");
         port = sp.getInt("port", 1337);
+        Client.setup(ip, port);
     }
 
     @Override
@@ -332,6 +334,7 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton(android.R.string.ok, (i1,i2) -> {
                             ip = ipField.getText().toString();
                             port = Integer.valueOf(portField.getText().toString());
+                            Client.setup(ip, port);
                             PreferenceManager.getDefaultSharedPreferences(this).edit()
                                     .putString("ip", ip)
                                     .putInt("port", port)
@@ -378,6 +381,7 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, EditActivity.class));
     }
 
+    @SuppressLint("SetTextI18n")
     public void onItemClick(ArtifactObject item) {
         @SuppressLint("InflateParams") View root = LayoutInflater.from(this)
                 .inflate(R.layout.dialog_objectpropts, null);
@@ -395,8 +399,8 @@ public class MainActivity extends AppCompatActivity {
 
         title.setText(item.getTitle());
         status.setText(getStatusString(item, this));
-        queries.setText(item.getQueriesSize());
-        total.setText(item.getTotal());
+        queries.setText(item.getQueriesSize()+"");
+        total.setText(item.getTotal()+"");
         created.setText(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG)
                 .format(new Date(item.getCreated())));
         trained.setText("---");
