@@ -35,7 +35,7 @@
         app:srcCompat="@drawable/baseline_close_black_24dp" />
 
     <ProgressBar
-        android:id="@+id/query_pb"
+        android:id="@+id/query_item_pb"
         style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

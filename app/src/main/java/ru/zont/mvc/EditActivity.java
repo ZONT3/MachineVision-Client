@@ -65,7 +65,7 @@ public class EditActivity extends AppCompatActivity {
     private void onItemClick(QueryAdapter.DataItem item) {
         switch (item.getType()) {
             case QueryAdapter.DataItem.TYPE_REGULAR:
-                startActivity(new Intent(this, EditActivity.class)
+                startActivity(new Intent(this, ResultsActivity.class)
                         .putExtra("query", item.get()));
                 break;
             case QueryAdapter.DataItem.TYPE_CUSTOM:
@@ -144,7 +144,7 @@ public class EditActivity extends AppCompatActivity {
             new AlertDialog.Builder(this)
                     .setTitle(R.string.edit_save)
                     .setPositiveButton(R.string.yes, this::startSaving)
-                    .setNegativeButton(R.string.no, (i1, i2) -> onBackPressed())
+                    .setNegativeButton(R.string.no, (i1, i2) -> finish())
                     .setNeutralButton(android.R.string.cancel, null)
                     .create().show();
         }
@@ -223,9 +223,9 @@ public class EditActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onNavigateUp() {
+    public boolean onSupportNavigateUp() {
         onBackPressed();
-	    return super.onNavigateUp();
+	    return false;
     }
 
     @SuppressWarnings({"UnnecessarySemicolon", "unused"})
