@@ -1,264 +1,231 @@
 package ru.zont.mvc;
 
-import android.app.ProgressDialog;
+import android.app.ActivityOptions;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.InputType;
-import android.text.TextWatcher;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
+import android.view.WindowManager;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-
 import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Objects;
+
+import ru.zont.mvc.core.ArtifactObject;
+import ru.zont.mvc.core.Client;
+import ru.zont.mvc.core.Dimension;
+import ru.zont.mvc.core.Request;
+
+import static android.view.inputmethod.EditorInfo.IME_ACTION_DONE;
 
 public class EditActivity extends AppCompatActivity {
 
-    private QueryAdapter adapter;
     private EditText title;
+    private QueryAdapter adapter;
+    private ArtifactObject toEdit;
+    private Toolbar toolbar;
 
-    private ArtifactObject editObject;
-    private String ovrdThumb;
-
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
-    protected void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_edit);
-
-        Toolbar toolbar = findViewById(R.id.edit_tb);
+	protected void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_edit);
+        toolbar = findViewById(R.id.edit_tb);
         setSupportActionBar(toolbar);
-        ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
-        actionBar.setDisplayHomeAsUpEnabled(true);
+		Objects.requireNonNull(getSupportActionBar())
+                .setDisplayHomeAsUpEnabled(true);
 
-        RecyclerView list = findViewById(R.id.edit_list);
-        title = findViewById(R.id.edit_title);
+		title = findViewById(R.id.edit_title);
+		title.setImeOptions(IME_ACTION_DONE);
+		title.setOnEditorActionListener((v, actionId, event) -> {
+		    if (actionId == IME_ACTION_DONE) {
+                startSaving();
+                return true;
+            } else return false;
+        });
 
-        adapter = new QueryAdapter(list);
-        adapter.setOnClickListener(new OnQueryClick(adapter));
-        list.setLayoutManager(new GridLayoutManager(this, Dimension.getDisplayWidthDp(this) / 190));
-        list.setAdapter(adapter);
-
-        if ((editObject = getIntent().getParcelableExtra("object")) != null) {
-            title.setText(editObject.getTitle());
-            for (ArtifactObject.Query q : editObject.getQueries())
-                adapter.add(q);
+        if ((toEdit = getIntent().getParcelableExtra("object")) == null)
+            adapter = new QueryAdapter();
+        else {
+            adapter = new QueryAdapter(toEdit.getQueries());
+            title.setText(toEdit.getTitle());
         }
+
+        RecyclerView rw = findViewById(R.id.edit_list);
+        rw.setAdapter(adapter);
+        rw.setLayoutManager(new GridLayoutManager(this,
+                Dimension.getDisplayWidthDp(this) / 200));
+        adapter.setOnItemClickListener(this::onItemClick);
+
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+    }
+
+    private void onItemClick(QueryAdapter.DataItem item, QueryAdapter.VH vh) {
+        switch (item.getType()) {
+            case QueryAdapter.DataItem.TYPE_REGULAR:
+                Pair<View, String> content = new Pair<>(vh.itemView, "CONTENT");
+                Pair<View, String> iw1 = new Pair<>(vh.getIW(0), "IW1");
+                Pair<View, String> iw2 = new Pair<>(vh.getIW(1), "IW2");
+                Pair<View, String> iw3 = new Pair<>(vh.getIW(2), "IW3");
+                Pair<View, String> iw4 = new Pair<>(vh.getIW(3), "IW4");
+                Pair<View, String> tb = new Pair<>(toolbar, "TB");
+
+                Intent intent = new Intent(this, ResultsActivity.class)
+                        .putExtra("query", item.get());
+                startActivityForResult(intent, 1337, ActivityOptions
+                        .makeSceneTransitionAnimation(this, content, iw1, iw2, iw3, iw4, tb)
+                        .toBundle());
+                break;
+            case QueryAdapter.DataItem.TYPE_CUSTOM:
+
+                break;
+            default: break;
+        }
+    }
+
+    private boolean isEdited() {
+        if (toEdit == null)
+            return !(title.getText().toString().isEmpty() && adapter.getQueries().size() == 0);
+        else return !(toEdit.getTitle().equals(title.getText().toString())
+                && toEdit.queriesEquals(adapter.getQueries()));
     }
 
     public void addQuery(View v) {
-        EditText editText = new EditText(this);
-        new AlertDialog.Builder(this)
+        EditText text = new EditText(this);
+//        text.setText(R.string.edit_addqdiag_hint);
+        text.setSelectAllOnFocus(true);
+        text.setImeOptions(IME_ACTION_DONE);
+
+        AlertDialog alertDialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.edit_addqdiag_title)
-                .setView(editText)
-                .setPositiveButton(android.R.string.ok, (dialog, which) ->
-                        adapter.addQuery(editText.getText().toString(), EditActivity.this))
-                .setNegativeButton(android.R.string.cancel, null)
-                .create().show();
+                .setView(text)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    String query = text.getText().toString();
+                    if (query.isEmpty()) {
+                        Toast.makeText(this, "アホか？", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    adapter.addLoadingQuery(query);
+                    AsyncGetImages.execute(query, 8, this::onFetchImages);
+                })
+                .create();
+
+        text.setOnEditorActionListener((v1, actionId, event) -> {
+            if (event != null && actionId == IME_ACTION_DONE
+                    && alertDialog != null && alertDialog.isShowing()) {
+                alertDialog.getButton(DialogInterface.BUTTON_POSITIVE)
+                        .callOnClick();
+                return true;
+            } else return false;
+        });
+
+        alertDialog.setOnShowListener(dialog -> text.requestFocus());
+//        alertDialog.create();
+        alertDialog.show();
     }
 
-    static class ImageGetter extends AsyncTask<Void, Void, String[]> {
-        private WeakReference<EditActivity> wr;
-        private ImageGetterPostExec postExec;
-
-        private String query;
-        private int rtcount;
-        private int offset;
-
-        ImageGetter(EditActivity activity, ImageGetterPostExec postExec,
-                    String query, int rtcount) {
-            this(activity, postExec, query, rtcount, 0);
-        }
-
-        ImageGetter(EditActivity activity, ImageGetterPostExec postExec,
-                    String query, int rtcount, int offset) {
-            wr = new WeakReference<>(activity);
-            this.postExec = postExec;
-
-            this.query = query;
-            this.rtcount = rtcount;
-            this.offset = offset;
-            execute();
-        }
-
-        @Override
-        protected String[] doInBackground(Void... voids) {
-            Request request = new Request(query, rtcount, offset);
-            try {
-                String responseStr = Client.sendJsonForResult(new Gson().toJson(request),
-                        /*"query_metadata",*/
-                        rtcount > 8 ? rtcount * 12000 : 30000);
-                Response response = new Gson().fromJson(responseStr, Response.class);
-                if (!response.response_code.equals("query_metadata")) {
-                    new Exception("Incorrect response_code: " + response.response_code).printStackTrace();
-                    return null;
-                }
-
-                String[] result = new String[response.metadata.length];
-                for (int i = 0; i < result.length; i++)
-                    result[i] = (String) response.metadata[i].get("image_link");
-                return result;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
+    private void onFetchImages(@NonNull String query, @Nullable String[] urls, @Nullable Exception e) {
+        if (urls == null) {
+            if (e != null) {
+                Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                return;
+            } else {
+                Toast.makeText(this, "Unexpected error", Toast.LENGTH_LONG).show();
+                return;
             }
         }
-
-        @Override
-        protected void onPostExecute(String[] strings) {
-            if (postExec != null)
-                postExec.postExec(wr, strings);
+        if (urls.length == 0) {
+            Toast.makeText(this, R.string.edit_nores, Toast.LENGTH_LONG).show();
+            return;
         }
 
-        static abstract class ImageGetterPostExec {
-            abstract void postExec(WeakReference<EditActivity> wr, String[] result);
-        }
+        ArtifactObject.Query queryInstance = new ArtifactObject.Query(query);
+        Collections.addAll(queryInstance.whitelist, urls);
+        adapter.addQuery(queryInstance);
+    }
 
-        @SuppressWarnings("unused")
-        private static class Request {
-            private String request_code = "reqimg";
-            private String query;
-            private int rtcount;
-            private int offset;
-
-            private Request(String query, int rtcount, int offset) {
-                this.query = query;
-                this.rtcount = rtcount;
-                this.offset = offset;
-            }
-        }
-
-        @SuppressWarnings({"unused", "MismatchedReadAndWriteOfArray"})
-        private static class Response {
-            private String response_code;
-            private HashMap<Object, Object>[] metadata;
+    @Override
+    public void onBackPressed() {
+        if (!isEdited()) super.onBackPressed();
+        else {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.edit_save)
+                    .setPositiveButton(R.string.yes, this::startSaving)
+                    .setNegativeButton(R.string.no, (i1, i2) -> finish())
+                    .setNeutralButton(android.R.string.cancel, null)
+                    .create().show();
         }
     }
 
-    private class OnQueryClick extends QueryAdapter.OnClickListener {
-        OnQueryClick(QueryAdapter qa) {
-            super(qa);
-        }
-
-        @Override
-        public void onItemClick(final ArtifactObject.Query query, int pos) {
-            int spanCount = (int) (Dimension.getDisplayWidthDp(EditActivity.this) * 0.9 / 110);
-
-            RecyclerView queryList = new RecyclerView(EditActivity.this);
-            queryList.setLayoutManager(new GridLayoutManager(EditActivity.this, spanCount));
-            QueryItemAdapter adapter = new QueryItemAdapter(queryList, query, new QueryItemAdapter.OnClickListener() {
-                @Override
-                public void onItemClick(String item) {
-                    startActivity(new Intent(Intent.ACTION_VIEW)
-                            .setDataAndType(Uri.parse(item), "image/*"));
-                }
-            }, new QueryItemAdapter.OnLongClickListener() {
-                @Override
-                public void onItemLongClick(String item) {
-                    ovrdThumb = item;
-                    Toast.makeText(EditActivity.this, R.string.edit_thumb_set, Toast.LENGTH_SHORT).show();
-                }
-            });
-            queryList.setAdapter(adapter);
-            if (adapter.getItemCount() % spanCount != 0)
-                adapter.loadMore(EditActivity.this, spanCount - (adapter.getItemCount() % spanCount));
-
-            AlertDialog dialog = new AlertDialog.Builder(EditActivity.this, R.style.QueryDiag)
-                    .setTitle(query.title)
-                    .setView(queryList)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .setNegativeButton(R.string.main_op_delete,
-                            (i1, i2) -> getAdapter().remove(query))
-                    .setNeutralButton(R.string.query_more, null)
-                    .setOnDismissListener(dialog1 -> EditActivity.this.adapter.notifyItemChanged(pos))
-                    .setCancelable(false)
-                    .create();
-
-            dialog.setOnShowListener(dialog1 -> {
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                        .setTextColor(getColor(android.R.color.holo_red_dark));
-
-                Button neutButton = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
-
-                neutButton.setOnClickListener(v -> {
-                    int count = spanCount + ((adapter.getItemCount() % spanCount == 0) ? 0 :
-                            (spanCount - (adapter.getItemCount() % spanCount)));
-                    adapter.loadMore(EditActivity.this, count < 6 ? count + spanCount : count);
-                });
-
-                neutButton.setLongClickable(true);
-                neutButton.setOnLongClickListener(v -> {
-                    EditText et = new EditText(EditActivity.this);
-                    et.setHint(R.string.query_more_count);
-                    et.setInputType(InputType.TYPE_CLASS_NUMBER);
-                    new AlertDialog.Builder(EditActivity.this)
-                            .setTitle(R.string.query_more)
-                            .setView(et)
-                            .setPositiveButton(android.R.string.ok, (dialog2, which) ->
-                                    adapter.loadMore(EditActivity.this,
-                                            Integer.valueOf(et.getText().toString())))
-                            .create().show();
-                    return true;
-                });
-            });
-            dialog.show();
-        }
-    }
-
-    private boolean save() {
-        ArtifactObject toSend;
-        if (editObject != null) {
-            try {
-                new DeleteRequest(editObject.getId());
-            } catch (IOException e) {
-                runOnUiThread(() ->
-                        Toast.makeText(this, R.string.edit_err_save, Toast.LENGTH_LONG).show());
-                return false;
-            }
-            editObject.edit(title.getText().toString(), adapter.getDataset());
-            if (ovrdThumb != null) editObject.setThumbnail(ovrdThumb);
-            toSend = editObject;
-        } else {
-            toSend = new ArtifactObject(title.getText().toString(), adapter.getDataset());
-            toSend.setThumbnail(ovrdThumb == null ? adapter.getDataset().get(0).whitelist.get(0) : ovrdThumb);
-        }
-
-        try {
-            return Client.sendJsonForResult(new Gson().toJson(new NewObjRequest(toSend))).equals("success");
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+    private void startSaving(DialogInterface di, int w) { startSaving(); }
 
     private boolean canSave() {
         if (title.getText().toString().isEmpty()) {
             Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
             return false;
         }
-        if (adapter.getDataset().size() <= 0) {
+        if (adapter.getQueries().size() <= 0) {
             Toast.makeText(this, R.string.edit_err_noquer, Toast.LENGTH_LONG).show();
             return false;
         }
         return true;
+    }
+
+    private void startSaving() {
+        if (!canSave()) return;
+
+        title.setEnabled(false);
+        View content = findViewById(R.id.edit_content);
+        View loading = findViewById(R.id.edit_loading);
+        content.startAnimation(AnimationUtils
+                .loadAnimation(this, R.anim.fadeout));
+        loading.startAnimation(AnimationUtils
+                .loadAnimation(this, R.anim.fadein));
+        content.postOnAnimation(() -> content.setVisibility(View.GONE));
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) { e.printStackTrace(); return; }
+            if (save()) finish();
+            else runOnUiThread(() -> {
+                Toast.makeText(this, "Error on saving", Toast.LENGTH_SHORT)
+                        .show();
+
+            });
+        }).start();
+    }
+
+    private boolean save() {
+        ArtifactObject toSend;
+        if (toEdit != null) {
+            toEdit.edit(title.getText().toString(), adapter.getQueries());
+            toSend = toEdit;
+        } else toSend = new ArtifactObject(title.getText().toString(), adapter.getQueries());
+
+        try {
+            Client.sendJsonForResult(
+                    Request.create("new_object")
+                            .put("artifact_object", toSend)
+                            .toString());
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
@@ -270,9 +237,7 @@ public class EditActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.edit_menu_save:
-                startSaving();
-                return true;
+            case R.id.edit_menu_save: startSaving(); return true;
             default: return super.onOptionsItemSelected(item);
         }
     }
@@ -280,57 +245,35 @@ public class EditActivity extends AppCompatActivity {
     @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
-        return super.onSupportNavigateUp();
+	    return false;
     }
 
     @Override
-    public void onBackPressed() {
-        if (editObject != null && editObject.dataEqualsExcId(new ArtifactObject(title.getText().toString(), adapter.getDataset()))
-                || editObject == null && title.getText().toString().isEmpty() && adapter.getDataset().size() == 0)
-            super.onBackPressed();
-        else {
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.edit_save)
-                    .setPositiveButton(R.string.yes, (dialog, which) -> startSaving())
-                    .setNegativeButton(R.string.no, (d,w) -> super.onBackPressed())
-                    .setNeutralButton(android.R.string.cancel, null)
-                    .create().show();
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == 1337 && resultCode == RESULT_OK && data != null) {
+            if (data.hasExtra("delete"))
+                adapter.delete(data.getParcelableExtra("delete"));
+            else adapter.updateQuery(data.getParcelableExtra("query"));
         }
     }
 
-    private void startSaving() {
-        if (!canSave()) return;
-        ProgressDialog pd = new ProgressDialog(this);
-        pd.setIndeterminate(true);
-        pd.show();
-        new Thread(() -> {
-                if (save()) finish();
-                else runOnUiThread(() -> {
-                    Toast.makeText(this, "Error on saving", Toast.LENGTH_SHORT)
-                            .show();
-                    pd.dismiss();
-                });
-        }).start();
-    }
-
-    @SuppressWarnings("unused")
-    private static class DeleteRequest {
-        private String id;
-        private final String request_code = "delete_object";
-
-        private DeleteRequest(String id) throws IOException {
-            this.id = id;
-            Client.sendJsonForResult(new Gson().toJson(this));
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static class NewObjRequest {
-        private final String request_code = "new_object";
-        private ArtifactObject artifact_object;
-
-        private NewObjRequest(ArtifactObject object) {
-            artifact_object = object;
-        }
+    @SuppressWarnings({"UnnecessarySemicolon", "unused"})
+    private void typaLogo() {
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                     ;;;;;;;;;;;;                      ;;;;;;;;;;;;;;;;                ;;;;;;;;    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;               ;;;;;;;;;;;;;;;;;;;;;;;;;               ;;;;;;;;;;;;;;;;                ;;;;;;;;    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;        ;;;;;;;;;;;               ;;;;;;;;;;;;;        ;;;;;;;;;;;;;;;;                ;;;;;;;;    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                      ;;;;;;;;;    ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;        ;;;;;;;;        ;;;;;;;;                    ;;;;;;;;
+                                  ;;;;;;;;;        ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;        ;;;;;;;;        ;;;;;;;;                    ;;;;;;;;
+                              ;;;;;;;;;            ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;        ;;;;;;;;        ;;;;;;;;                    ;;;;;;;;
+                          ;;;;;;;;;                ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;        ;;;;;;;;        ;;;;;;;;                    ;;;;;;;;
+                      ;;;;;;;;;                    ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;        ;;;;;;;;        ;;;;;;;;                    ;;;;;;;;
+                  ;;;;;;;;;                        ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;                ;;;;;;;;;;;;;;;;                    ;;;;;;;;
+              ;;;;;;;;;                            ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;                ;;;;;;;;;;;;;;;;                    ;;;;;;;;
+          ;;;;;;;;;                                ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;                ;;;;;;;;;;;;;;;;                    ;;;;;;;;
+        ;;;;;;;;;                                  ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;                ;;;;;;;;;;;;;;;;                    ;;;;;;;;
+        ;;;;;;;;                                   ;;;;;;;;;;;                         ;;;;;;;;;;;    ;;;;;;;;                ;;;;;;;;;;;;;;;;                    ;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;        ;;;;;;;;;;;               ;;;;;;;;;;;;;        ;;;;;;;;                        ;;;;;;;;                    ;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;               ;;;;;;;;;;;;;;;;;;;;;;;;;               ;;;;;;;;                        ;;;;;;;;                    ;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                     ;;;;;;;;;;;;                      ;;;;;;;;                        ;;;;;;;;                    ;;;;;;;;
     }
 }

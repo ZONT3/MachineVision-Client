@@ -1,6 +1,5 @@
 package ru.zont.mvc;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -12,146 +11,125 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
-import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 
-@SuppressWarnings("CanBeFinal")
-public class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.ViewHolder> {
-    private ArrayList<ArtifactObject> mDataset;
-    private OnItemClick onItemClick;
+import ru.zont.mvc.core.ArtifactObject;
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        View root;
-        ImageView mThumb;
-        TextView mTitle;
-        TextView mMeta;
-        TextView mStatus;
-        TextView mLastact;
+class ObjectAdapter extends RecyclerView.Adapter<ObjectAdapter.VH> {
+    class VH extends RecyclerView.ViewHolder {
+        private TextView title;
+        private TextView meta;
+        private TextView status;
+        private TextView act;
+        private ImageView thumb;
 
-        ViewHolder(View v) {
-            super(v);
-            root = v;
-            mThumb = v.findViewById(R.id.main_item_thumb);
-            mTitle = v.findViewById(R.id.main_item_title);
-            mMeta = v.findViewById(R.id.main_item_meta);
-            mStatus = v.findViewById(R.id.main_item_status);
-            mLastact = v.findViewById(R.id.main_item_lastact);
+        private VH(@NonNull View itemView) {
+            super(itemView);
+            title = itemView.findViewById(R.id.main_item_title);
+            meta = itemView.findViewById(R.id.main_item_meta);
+            status = itemView.findViewById(R.id.main_item_status);
+            act = itemView.findViewById(R.id.main_item_lastact);
+            thumb = itemView.findViewById(R.id.main_item_thumb);
         }
     }
 
-//    ObjectAdapter(ArrayList<ArtifactObject> myDataset) {
-//        mDataset = myDataset;
-//    }
+    private ArrayList<ArtifactObject> dataset;
+    private OnItemClickListener listener;
 
-    ObjectAdapter(ArtifactObject[] myDataset, OnItemClick onItemClick) {
-        mDataset = new ArrayList<>();
-        Collections.addAll(mDataset, myDataset);
-        this.onItemClick = onItemClick;
-        this.onItemClick.wr = new WeakReference<>(this);
+    ObjectAdapter() {
+        this(new ArrayList<>());
+    }
+
+    ObjectAdapter(ArrayList<ArtifactObject> dataset) {
+        this.dataset = dataset;
+    }
+
+    void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
     }
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.fragment_object, parent, false);
-        return new ViewHolder(v);
+    public VH onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        return new VH(LayoutInflater.from(viewGroup.getContext())
+                .inflate(R.layout.fragment_object, viewGroup, false));
     }
 
-    @SuppressLint("DefaultLocale")
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        ArtifactObject object = mDataset.get(position);
-        holder.mTitle.setText(object.getTitle());
-        holder.mMeta.setText(String.format(holder.mThumb.getContext().getString(R.string.main_obj_meta),
-                object.getQueriesSize(),
-                object.getTotalBlacklisted() > 0
-                        ? ", " + holder.mThumb.getContext().getString(R.string.main_obj_bl, object.getTotalBlacklisted())
-                        : ""));
+    public void onBindViewHolder(@NonNull VH vh, int i) {
+        ArtifactObject object = dataset.get(i);
+        Context context = vh.itemView.getContext();
 
-        Context context = holder.mThumb.getContext();
-        holder.mStatus.setText(MainActivity.getStatusString(object, context));
+        vh.title.setText(object.getTitle());
+        vh.meta.setText(context.getString(R.string.main_meta, object.getTotal()));
+        vh.status.setText(MainActivity.getStatusString(object, context));
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(object.getLastAct());
-        DateFormat format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
-        if (calendar.get(Calendar.DAY_OF_YEAR)*calendar.get(Calendar.YEAR) == Calendar.getInstance().get(Calendar.DAY_OF_YEAR)*Calendar.getInstance().get(Calendar.YEAR))
-            format = DateFormat.getTimeInstance(DateFormat.SHORT);
-        int act = R.string.blank;
-        switch (object.getLastActType()) {
-            case ArtifactObject.ACTION.CREATED: act = R.string.artobj_created; break;
-            case ArtifactObject.ACTION.EDITED: act = R.string.artobj_edited; break;
-            case ArtifactObject.ACTION.STARTED_TRAINING: act = R.string.artobj_started; break;
-            case ArtifactObject.ACTION.TRAINED: act = R.string.artobj_learned; break;
-        }
-        holder.mLastact.setText(context.getString(act, format.format(calendar.getTime())));
+        DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+        if (calendar.get(Calendar.DAY_OF_YEAR) * calendar.get(Calendar.YEAR) ==
+                Calendar.getInstance().get(Calendar.DAY_OF_YEAR) * Calendar.getInstance().get(Calendar.YEAR))
+            format = DateFormat.getTimeInstance(DateFormat.MEDIUM);
+        vh.act.setText(String.format(MainActivity.getActionString(object, context),
+                format.format(calendar.getTime())));
 
-        if (object.getThumbnail() != null)
-            Glide.with(holder.mThumb)
-                    .load(object.getThumbnail())
-                    .into(holder.mThumb);
+        Glide.with(context)
+                .load(object.getThumbnail())
+                .into(vh.thumb);
 
-        holder.root.setTag(object.getId());
-        holder.root.setOnClickListener(onItemClick);
-    }
-
-    @Override
-    public int getItemCount() {
-        return mDataset.size();
+        vh.itemView.setOnClickListener(v -> {
+            if (listener == null) return;
+            listener.onItemClick(object);
+        });
     }
 
     void updateDataset(ArtifactObject[] newDataset) {
-        ArrayList<ArtifactObject> tempDataset = new ArrayList<>();
-        Collections.addAll(tempDataset, newDataset);
-        for (ArtifactObject obj : tempDataset) {
-            if (!mDataset.contains(obj)) {
-                mDataset.add(obj);
-                notifyItemInserted(mDataset.indexOf(obj));
-                notifyItemRangeChanged(mDataset.indexOf(obj), mDataset.size());
+        ArrayList<ArtifactObject> list = new ArrayList<>();
+        Collections.addAll(list, newDataset);
+        updateDataset(list);
+    }
+
+    void updateDataset(ArrayList<ArtifactObject> newDataset) {
+        for (ArtifactObject object : newDataset) {
+            if (!dataset.contains(object)) {
+                dataset.add(object);
+                notifyItemInserted(dataset.indexOf(object));
+                notifyItemRangeChanged(dataset.indexOf(object), dataset.size());
             }
         }
-        for (ArtifactObject obj : mDataset) {
-            if (!tempDataset.contains(obj)) {
-                int pos = mDataset.indexOf(obj);
-                mDataset.remove(obj);
+        for (ArtifactObject object : dataset) {
+            if (!dataset.contains(object)) {
+                int pos = dataset.indexOf(object);
+                dataset.remove(object);
                 notifyItemRemoved(pos);
-                notifyItemRangeChanged(pos, mDataset.size());
+                notifyItemRangeChanged(pos, dataset.size());
             }
         }
-        for (ArtifactObject obj : mDataset) {
-            if (!obj.dataEquals(tempDataset.get(tempDataset.indexOf(obj)))) {
-                mDataset.set(mDataset.indexOf(obj), tempDataset.get(tempDataset.indexOf(obj)));
-                notifyItemChanged(mDataset.indexOf(obj));
+        for (ArtifactObject obj : dataset) {
+            if (!obj.dataEquals(newDataset.get(newDataset.indexOf(obj)))) {
+                dataset.set(dataset.indexOf(obj), newDataset.get(newDataset.indexOf(obj)));
+                notifyItemChanged(dataset.indexOf(obj));
             }
         }
     }
 
     void clear() {
-        if (mDataset.size() == 0) return;
-        int size = mDataset.size();
-        mDataset = new ArrayList<>();
+        if (dataset.size() == 0) return;
+        int size = dataset.size();
+        dataset = new ArrayList<>();
         notifyItemRangeRemoved(0, size);
         notifyItemRangeChanged(0, size);
     }
 
-    static abstract class OnItemClick implements View.OnClickListener {
-        private WeakReference<ObjectAdapter> wr;
-
-        @Override
-        public void onClick(View v) {
-            if (wr == null) return;
-            for (ArtifactObject object : wr.get().mDataset) {
-                if (object.getId().equals(v.getTag())) {
-                    onItemClick(object);
-                    return;
-                }
-            }
-        }
-
-        abstract void onItemClick(ArtifactObject object);
+    @Override
+    public int getItemCount() {
+        return dataset.size();
     }
 
+    interface OnItemClickListener {
+        void onItemClick(ArtifactObject item);
+    }
 }

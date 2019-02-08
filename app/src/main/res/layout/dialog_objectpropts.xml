@@ -2,7 +2,7 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?android:attr/detailsElementBackground"
     android:padding="16dp"
@@ -16,6 +16,7 @@
         android:text="Title"
         android:textAlignment="textStart"
         android:textAppearance="@android:style/TextAppearance.Material.Title"
+        android:textSize="24sp"
         app:layout_constraintEnd_toStartOf="@+id/objpts_switch"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -25,6 +26,7 @@
         android:id="@+id/objpts_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/objpts_title"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/objpts_title"
         app:layout_constraintTop_toTopOf="parent" />
@@ -36,7 +38,7 @@
         android:layout_marginTop="8dp"
         android:text="@string/main_op_status"
         android:textAppearance="@android:style/TextAppearance.Material.Small"
-        android:textSize="14sp"
+        android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/objpts_title" />
 
@@ -45,12 +47,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
-        android:text="Ready, Up-to-date"
         android:textAppearance="@android:style/TextAppearance.Material.Body2"
-        android:textSize="14sp"
+        android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@+id/textView3"
         app:layout_constraintTop_toTopOf="@+id/textView3"
-        tools:ignore="HardcodedText" />
+        tools:ignore="HardcodedText"
+        tools:text="Ready, Up-to-date" />
 
     <TextView
         android:id="@+id/textView5"
@@ -59,21 +61,21 @@
         android:layout_marginTop="8dp"
         android:text="@string/main_op_queries"
         android:textAppearance="@android:style/TextAppearance.Material.Small"
-        android:textSize="14sp"
+        android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+        app:layout_constraintTop_toBottomOf="@+id/objpts_status" />
 
     <TextView
         android:id="@+id/objpts_queries"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
-        android:text="4"
         android:textAppearance="@android:style/TextAppearance.Material.Body2"
-        android:textSize="14sp"
+        android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@+id/textView5"
         app:layout_constraintTop_toTopOf="@+id/textView5"
-        tools:ignore="HardcodedText" />
+        tools:ignore="HardcodedText"
+        tools:text="4" />
 
     <TextView
         android:id="@+id/textView6"
@@ -81,9 +83,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/main_op_total"
-        android:textSize="14sp"
+        android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView5" />
+        app:layout_constraintTop_toBottomOf="@+id/objpts_queries" />
 
     <TextView
         android:id="@+id/objpts_total"
@@ -92,6 +94,7 @@
         android:layout_marginStart="4dp"
         android:text="@string/main_op_unknown"
         android:textAppearance="@android:style/TextAppearance.Material.Body2"
+        android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@+id/textView6"
         app:layout_constraintTop_toTopOf="@+id/textView6" />
 
@@ -101,20 +104,21 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/main_op_created"
-        android:textSize="14sp"
+        android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView6" />
+        app:layout_constraintTop_toBottomOf="@+id/objpts_total" />
 
     <TextView
         android:id="@+id/objpts_created"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
-        android:text="14 aug. 1939"
         android:textAppearance="@android:style/TextAppearance.Material.Body2"
+        android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@+id/textView8"
         app:layout_constraintTop_toTopOf="@+id/textView8"
-        tools:ignore="HardcodedText" />
+        tools:ignore="HardcodedText"
+        tools:text="14 aug. 1939" />
 
     <TextView
         android:id="@+id/textView10"
@@ -122,110 +126,66 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/main_op_learned"
-        android:textSize="14sp"
+        android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView8" />
+        app:layout_constraintTop_toBottomOf="@+id/objpts_created" />
 
     <TextView
         android:id="@+id/objpts_learned"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
-        android:text="---"
         android:textAppearance="@android:style/TextAppearance.Material.Body2"
+        android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@+id/textView10"
         app:layout_constraintTop_toTopOf="@+id/textView10"
-        tools:ignore="HardcodedText" />
+        tools:ignore="HardcodedText"
+        tools:text="---" />
 
     <View
         android:id="@+id/divider2"
         android:layout_width="0dp"
         android:layout_height="1dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:background="?android:attr/listDivider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView10" />
+        app:layout_constraintTop_toBottomOf="@+id/objpts_learned" />
 
-    <android.support.constraint.ConstraintLayout
-        android:id="@+id/objpts_btnlay_edit"
+    <Button
+        android:id="@+id/objpts_train"
+        style="@android:style/Widget.Material.Light.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackgroundBorderless"
-        android:padding="8dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/divider2">
-
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="19dp"
-            android:layout_height="19dp"
-            app:layout_constraintEnd_toStartOf="@+id/textView12"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/baseline_edit_black_48"
-            android:contentDescription="@string/main_op_edit" />
-
-        <TextView
-            android:id="@+id/textView12"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/main_op_edit"
-            android:textAppearance="@android:style/TextAppearance.Material.Widget.Button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/imageView"
-            app:layout_constraintTop_toTopOf="parent" />
-    </android.support.constraint.ConstraintLayout>
-
-    <android.support.constraint.ConstraintLayout
-        android:id="@+id/objpts_btnlay_delete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackgroundBorderless"
-        android:padding="8dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/objpts_btnlay_edit">
-
-        <ImageView
-            android:id="@+id/imageView2"
-            android:layout_width="19dp"
-            android:layout_height="19dp"
-            app:layout_constraintEnd_toStartOf="@+id/textView13"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/baseline_delete_black_36dp"
-            android:contentDescription="@string/main_op_delete" />
-
-        <TextView
-            android:id="@+id/textView13"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/main_op_delete"
-            android:textAppearance="@android:style/TextAppearance.Material.Widget.Button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/imageView2"
-            app:layout_constraintTop_toTopOf="parent" />
-    </android.support.constraint.ConstraintLayout>
+        android:drawableStart="@drawable/ic_baseline_storage_24px"
+        android:text="@string/main_op_train"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
     <Button
-        android:id="@+id/objpts_btnlay_train"
-        style="@android:style/Widget.Material.Button.Borderless.Colored"
+        android:id="@+id/objpts_edit"
+        style="@android:style/Widget.Material.Button.Borderless"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Train"
-        android:textAlignment="textStart"
-        android:textColor="@android:color/holo_green_light"
-        android:visibility="visible"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/objpts_btnlay_delete" />
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:drawableStart="@drawable/ic_baseline_edit_24px"
+        android:text="@string/main_op_edit"
+        app:layout_constraintEnd_toStartOf="@+id/objpts_train"
+        app:layout_constraintTop_toBottomOf="@+id/divider2" />
+
+    <Button
+        android:id="@+id/objpts_delete"
+        style="@android:style/Widget.Material.Light.Button.Borderless.Colored"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:drawableStart="@drawable/ic_baseline_delete_red"
+        android:text="@string/main_op_delete"
+        android:textColor="@android:color/holo_red_dark"
+        app:layout_constraintEnd_toStartOf="@+id/objpts_edit"
+        app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
 </android.support.constraint.ConstraintLayout>

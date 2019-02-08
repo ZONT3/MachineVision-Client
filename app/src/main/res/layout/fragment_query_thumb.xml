@@ -19,11 +19,10 @@
 
         <ImageView
             android:id="@+id/edit_query_iw1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
             android:layout_marginStart="4dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginTop="8dp"
             app:layout_constraintEnd_toStartOf="@+id/edit_query_iw2"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -31,9 +30,9 @@
 
         <ImageView
             android:id="@+id/edit_query_iw2"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_marginTop="8dp"
             android:layout_marginEnd="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/edit_query_iw1"
@@ -42,12 +41,10 @@
 
         <ImageView
             android:id="@+id/edit_query_iw3"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
             android:layout_marginStart="4dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="4dp"
-            app:layout_constraintBottom_toTopOf="@+id/edit_query_title"
+            android:layout_marginTop="8dp"
             app:layout_constraintEnd_toStartOf="@+id/edit_query_iw4"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/edit_query_iw1"
@@ -55,13 +52,12 @@
 
         <ImageView
             android:id="@+id/edit_query_iw4"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_marginTop="8dp"
             android:layout_marginEnd="4dp"
-            app:layout_constraintBottom_toTopOf="@+id/edit_query_title"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/edit_query_iw3"
+            app:layout_constraintStart_toEndOf="@id/edit_query_iw3"
             app:layout_constraintTop_toBottomOf="@+id/edit_query_iw2"
             tools:srcCompat="@tools:sample/avatars" />
 
@@ -69,13 +65,15 @@
             android:id="@+id/edit_query_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:background="@color/colorQueryThumbTitle"
             android:padding="4dp"
-            android:textAlignment="viewStart"
+            android:textAlignment="center"
             android:textAppearance="@android:style/TextAppearance.Material.Menu"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/edit_query_iw3"
             tools:text="Query Title" />
 
         <ProgressBar
@@ -84,6 +82,22 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@+id/edit_query_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/edit_query_nanimo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="Nani mo, nani mo\nMada shiranu"
+            android:textAlignment="center"
+            android:textAppearance="@android:style/TextAppearance.Material.Small"
             app:layout_constraintBottom_toTopOf="@+id/edit_query_title"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
