@@ -18,6 +18,7 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
+import java.util.Collections;
 import java.util.Random;
 
 import ru.zont.mvc.core.ArtifactObject;
@@ -51,13 +52,21 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
     }
 
     void addImageIntentions(int count) {
+        int was = getItemCount();
         intentions += count;
         offset += count;
+        notifyItemRangeInserted(was, getItemCount());
     }
 
     void addImages(String[] urls, int intentionWas) {
-        intentions -= intentionWas - urls.length;
+        int startIntentPos = query.whitelist.size();
+        int oldSize = getItemCount();
+
+        intentions -= intentionWas;
         if (intentions < 0 ) intentions = 0;
+
+        Collections.addAll(query.whitelist, urls);
+        notifyItemRangeChanged(startIntentPos, oldSize);
     }
 
     private void setOnItemClickListener(OnItemClickListener listener) {
@@ -126,6 +135,8 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         if (!reqID.equals(vh.id)) return;
 
         int i = query.whitelist.indexOf(url);
+        if (i < 0) return;
+
         query.whitelist.remove(i);
         notifyItemRemoved(i);
         notifyItemRangeChanged(i, query.whitelist.size());

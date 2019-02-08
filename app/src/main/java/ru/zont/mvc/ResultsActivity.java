@@ -1,11 +1,15 @@
 package ru.zont.mvc;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.InputType;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import java.util.Objects;
@@ -38,6 +42,8 @@ public class ResultsActivity extends AppCompatActivity {
         RecyclerView rw = findViewById(R.id.results_rw);
         rw.setAdapter(adapter = new ResultsAdapter(query));
         rw.setLayoutManager(new GridLayoutManager(this, spanCount));
+
+        findViewById(R.id.results_fab).setOnLongClickListener(this::onLongClickMore);
     }
 
     public void onClickMore(View v) {
@@ -45,11 +51,38 @@ public class ResultsActivity extends AppCompatActivity {
                 ? spanCount : spanCount + adapter.getItemCount() % spanCount;
         adapter.addImageIntentions(count);
 
-        AsyncGetImages.execute(adapter.getQuery().title, count, adapter.getOffset(), this::onFetch);
+        AsyncGetImages.execute(adapter.getQuery().title, count, adapter.getOffset(),
+                (query, urls, e) -> onFetch(urls, e, count));
     }
 
-    private void onFetch(String q, String[] urls, Exception e) {
-        //TODO сука не успел
+    @SuppressLint("SetTextI18n")
+    public boolean onLongClickMore(View v) {
+        int count = adapter.getItemCount() % spanCount == 0
+                ? spanCount : spanCount + adapter.getItemCount() % spanCount;
+        EditText et = new EditText(this);
+        et.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        et.setText(count+"");
+        et.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.query_more_count)
+                .setView(et)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    int nc = Integer.valueOf(et.getText().toString());
+                    adapter.addImageIntentions(nc);
+                    AsyncGetImages.execute(adapter.getQuery().title, nc, adapter.getOffset(),
+                            (query, urls, e) -> onFetch(urls, e, nc));
+                }).create().show();
+        return true;
+    }
+
+    private void onFetch(String[] urls, Exception e, int c) {
+        if (urls == null || e != null) {
+            Toast.makeText(this, e != null ? e.getLocalizedMessage() : "Error on fetching urls", Toast.LENGTH_LONG)
+                    .show();
+            return;
+        }
+
+        adapter.addImages(urls, c);
     }
 
     @Override
