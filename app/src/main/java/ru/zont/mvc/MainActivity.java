@@ -363,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
                         request.put("url", view.getText().toString());
 
                         try {
-                            String response = Client.sendJsonForResult(new Gson().toJson(request), 1200);
+                            String response = Client.sendJsonForResult(new Gson().toJson(request), 1200000);
                             URL url = new URL(response);
                             startActivity(new Intent(Intent.ACTION_VIEW)
                                     .setDataAndType(Uri.parse(url.toString()), "image/*"));
