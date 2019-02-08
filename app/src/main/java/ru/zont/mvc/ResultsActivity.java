@@ -1,6 +1,7 @@
 package ru.zont.mvc;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -83,6 +84,7 @@ public class ResultsActivity extends AppCompatActivity {
         }
 
         adapter.addImages(urls, c);
+        setResult(RESULT_OK, new Intent().putExtra("query", adapter.getQuery()));
     }
 
     @Override

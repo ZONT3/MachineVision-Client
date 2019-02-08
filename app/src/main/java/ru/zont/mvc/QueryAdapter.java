@@ -92,6 +92,17 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
         notifyItemInserted(dataset.size() - 1);
     }
 
+    void updateQuery(ArtifactObject.Query newQuery) {
+        int i = -1;
+        for (QueryAdapter.DataItem item : dataset)
+            if (item.get() != null && item.get().title.equals(newQuery.title))
+                i = dataset.indexOf(item);
+        if (i < 0) return;
+
+        dataset.set(i, new DataItem(newQuery));
+        notifyItemChanged(i);
+    }
+
     @SuppressLint("InflateParams")
     @NonNull
     @Override

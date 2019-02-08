@@ -65,8 +65,8 @@ public class EditActivity extends AppCompatActivity {
     private void onItemClick(QueryAdapter.DataItem item) {
         switch (item.getType()) {
             case QueryAdapter.DataItem.TYPE_REGULAR:
-                startActivity(new Intent(this, ResultsActivity.class)
-                        .putExtra("query", item.get()));
+                startActivityForResult(new Intent(this, ResultsActivity.class)
+                        .putExtra("query", item.get()), 1337);
                 break;
             case QueryAdapter.DataItem.TYPE_CUSTOM:
 
@@ -226,6 +226,12 @@ public class EditActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
 	    return false;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == 1337 && resultCode == RESULT_OK && data != null)
+            adapter.updateQuery(data.getParcelableExtra("query"));
     }
 
     @SuppressWarnings({"UnnecessarySemicolon", "unused"})

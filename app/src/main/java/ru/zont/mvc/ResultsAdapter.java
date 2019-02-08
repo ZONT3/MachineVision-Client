@@ -91,6 +91,7 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
     @Override
     public void onBindViewHolder(@NonNull VH vh, int i) {
         vh.pb.setVisibility(View.VISIBLE);
+        vh.thumbnail.setVisibility(View.INVISIBLE);
         if (i >= query.whitelist.size()) return;
 
         String url = query.whitelist.get(i);
@@ -145,6 +146,7 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
     private synchronized void onResourceReady(String reqID, VH vh) {
         if (!reqID.equals(vh.id)) return;
         vh.pb.setVisibility(View.GONE);
+        vh.thumbnail.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -159,4 +161,6 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
     interface OnItemLongClickListener {
         void onItemLongClick(String url);
     }
+
+
 }
