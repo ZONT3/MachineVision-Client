@@ -56,6 +56,11 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
             for (int i = 0; i < states.length; i++)
                 states[i] = false;
         }
+
+        ImageView getIW(int i) {
+            if (i>=thumbs.length) return null;
+            return thumbs[i];
+        }
     }
 
     private DataSet dataset;
@@ -101,6 +106,15 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
 
         dataset.set(i, new DataItem(newQuery));
         notifyItemChanged(i);
+    }
+
+    void delete(ArtifactObject.Query q) {
+        int pos = dataset.indexOf(q);
+        if (pos < 0) return;
+
+        dataset.remove(pos);
+        notifyItemRemoved(pos);
+        notifyItemRangeChanged(pos, dataset.size());
     }
 
     @SuppressLint("InflateParams")
@@ -163,7 +177,7 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
 
         vh.itemView.setOnClickListener(v -> {
             if (listener != null)
-                listener.onItemClick(item);
+                listener.onItemClick(item, vh);
         });
     }
 
@@ -241,9 +255,17 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
             for (ArtifactObject.Query q : list)
                 add(new DataItem(q));
         }
+
+        private int indexOf(ArtifactObject.Query q) {
+            if (q == null) return -1;
+            for (DataItem item : this)
+                if (q.equals(item.query))
+                    return indexOf(item);
+            return -1;
+        }
     }
 
     interface OnItemClickListener {
-        void onItemClick(DataItem item);
+        void onItemClick(DataItem item, VH vh);
     }
 }

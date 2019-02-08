@@ -9,6 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.InputType;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -22,6 +24,7 @@ public class ResultsActivity extends AppCompatActivity {
 
     private ResultsAdapter adapter;
     private int spanCount;
+    private GridLayoutManager layoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +45,7 @@ public class ResultsActivity extends AppCompatActivity {
 
         RecyclerView rw = findViewById(R.id.results_rw);
         rw.setAdapter(adapter = new ResultsAdapter(query));
-        rw.setLayoutManager(new GridLayoutManager(this, spanCount));
+        rw.setLayoutManager(layoutManager = new GridLayoutManager(this, spanCount));
 
         findViewById(R.id.results_fab).setOnLongClickListener(this::onLongClickMore);
     }
@@ -63,7 +66,7 @@ public class ResultsActivity extends AppCompatActivity {
         EditText et = new EditText(this);
         et.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         et.setText(count+"");
-        et.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
+        et.setInputType(InputType.TYPE_CLASS_NUMBER);
         new AlertDialog.Builder(this)
                 .setTitle(R.string.query_more_count)
                 .setView(et)
@@ -88,8 +91,44 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.results, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.results_menu_delete:
+                setResult(RESULT_OK, new Intent().putExtra("delete", adapter.getQuery()));
+                finish();
+                return true;
+            default: return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        layoutManager.scrollToPosition(0);
+        new Thread(() -> {
+            try {
+                while (layoutManager.findFirstCompletelyVisibleItemPosition() != 0)
+                    Thread.sleep(50);
+
+                runOnUiThread(super::onBackPressed);
+            } catch (InterruptedException ignored) { }
+        }).start();
+    }
+
+    @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return false;
+    }
+
+    @Override
+    public void finishAfterTransition() {
+        findViewById(R.id.results_content).setTransitionName("NULL");
+        super.finishAfterTransition();
     }
 }

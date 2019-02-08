@@ -94,6 +94,9 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         vh.thumbnail.setVisibility(View.INVISIBLE);
         if (i >= query.whitelist.size()) return;
 
+        if (i < 4) vh.thumbnail.setTransitionName("IW" + (i+1));
+        else vh.thumbnail.setTransitionName("NULL");
+
         String url = query.whitelist.get(i);
         Context context = vh.itemView.getContext();
 

@@ -1,5 +1,6 @@
 package ru.zont.mvc;
 
+import android.app.ActivityOptions;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,6 +10,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,12 +36,14 @@ public class EditActivity extends AppCompatActivity {
     private EditText title;
     private QueryAdapter adapter;
     private ArtifactObject toEdit;
+    private Toolbar toolbar;
 
     @Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_edit);
-		setSupportActionBar(findViewById(R.id.edit_tb));
+        toolbar = findViewById(R.id.edit_tb);
+        setSupportActionBar(toolbar);
 		Objects.requireNonNull(getSupportActionBar())
                 .setDisplayHomeAsUpEnabled(true);
 
@@ -51,22 +56,37 @@ public class EditActivity extends AppCompatActivity {
             } else return false;
         });
 
+        if ((toEdit = getIntent().getParcelableExtra("object")) == null)
+            adapter = new QueryAdapter();
+        else {
+            adapter = new QueryAdapter(toEdit.getQueries());
+            title.setText(toEdit.getTitle());
+        }
+
         RecyclerView rw = findViewById(R.id.edit_list);
-        rw.setAdapter(adapter = new QueryAdapter());
+        rw.setAdapter(adapter);
         rw.setLayoutManager(new GridLayoutManager(this,
                 Dimension.getDisplayWidthDp(this) / 200));
         adapter.setOnItemClickListener(this::onItemClick);
 
-		//TODO parse requested object
-
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
     }
 
-    private void onItemClick(QueryAdapter.DataItem item) {
+    private void onItemClick(QueryAdapter.DataItem item, QueryAdapter.VH vh) {
         switch (item.getType()) {
             case QueryAdapter.DataItem.TYPE_REGULAR:
-                startActivityForResult(new Intent(this, ResultsActivity.class)
-                        .putExtra("query", item.get()), 1337);
+                Pair<View, String> content = new Pair<>(vh.itemView, "CONTENT");
+                Pair<View, String> iw1 = new Pair<>(vh.getIW(0), "IW1");
+                Pair<View, String> iw2 = new Pair<>(vh.getIW(1), "IW2");
+                Pair<View, String> iw3 = new Pair<>(vh.getIW(2), "IW3");
+                Pair<View, String> iw4 = new Pair<>(vh.getIW(3), "IW4");
+                Pair<View, String> tb = new Pair<>(toolbar, "TB");
+
+                Intent intent = new Intent(this, ResultsActivity.class)
+                        .putExtra("query", item.get());
+                startActivityForResult(intent, 1337, ActivityOptions
+                        .makeSceneTransitionAnimation(this, content, iw1, iw2, iw3, iw4, tb)
+                        .toBundle());
                 break;
             case QueryAdapter.DataItem.TYPE_CUSTOM:
 
@@ -84,7 +104,7 @@ public class EditActivity extends AppCompatActivity {
 
     public void addQuery(View v) {
         EditText text = new EditText(this);
-        text.setText(R.string.edit_addqdiag_hint);
+//        text.setText(R.string.edit_addqdiag_hint);
         text.setSelectAllOnFocus(true);
         text.setImeOptions(IME_ACTION_DONE);
 
@@ -230,8 +250,11 @@ public class EditActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == 1337 && resultCode == RESULT_OK && data != null)
-            adapter.updateQuery(data.getParcelableExtra("query"));
+        if (requestCode == 1337 && resultCode == RESULT_OK && data != null) {
+            if (data.hasExtra("delete"))
+                adapter.delete(data.getParcelableExtra("delete"));
+            else adapter.updateQuery(data.getParcelableExtra("query"));
+        }
     }
 
     @SuppressWarnings({"UnnecessarySemicolon", "unused"})
