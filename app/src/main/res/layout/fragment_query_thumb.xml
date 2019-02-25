@@ -95,7 +95,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
-            android:text="Nani mo, nani mo\nMada shiranu"
+            android:text="@string/query_thumb_nores"
             android:textAlignment="center"
             android:textAppearance="@android:style/TextAppearance.Material.Small"
             app:layout_constraintBottom_toTopOf="@+id/edit_query_title"

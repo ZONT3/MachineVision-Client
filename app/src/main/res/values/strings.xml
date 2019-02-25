@@ -64,5 +64,6 @@
     <string name="main_serverip">Server IP</string>
     <string name="edit_custq">Uploaded by User</string>
     <string name="edit_saving">Saving, please wait</string>
-    <string name="results_error">Error: Parceable not transfered</string>
+    <string name="results_error">Error: Parceable not transferred</string>
+    <string name="query_thumb_nores">No Images</string>
 </resources>
