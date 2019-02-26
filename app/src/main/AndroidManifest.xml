@@ -19,7 +19,8 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".ResultsActivity"></activity>
+        <activity android:name=".MarkActivity"></activity>
+        <activity android:name=".ResultsActivity" />
         <activity android:name=".GuessActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
@@ -29,8 +30,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".EditActivity" />
-        <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
-            android:theme="@style/Base.Theme.AppCompat"/>
+        <activity
+            android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
+            android:theme="@style/Base.Theme.AppCompat" />
     </application>
 
 </manifest>

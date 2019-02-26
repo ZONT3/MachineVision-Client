@@ -107,6 +107,12 @@ public class ArtifactObjectNew implements Parcelable {
             layout = new ArrayList<>();
         }
 
+        public void addLayout(Rect selection) {
+            addLayout(new Integer[] {
+                    selection.left, selection.top,
+                    selection.right, selection.bottom });
+        }
+
         public void addLayout(Integer[] newLay) {
             if (newLay.length != 4) return;
             layout.add(newLay);

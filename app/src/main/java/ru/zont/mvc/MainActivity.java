@@ -4,10 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -34,12 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
-import com.theartofdev.edmodo.cropper.CropImage;
-import com.theartofdev.edmodo.cropper.CropImageView;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -48,6 +41,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import ru.zont.mvc.core.ArtifactObject;
+import ru.zont.mvc.core.ArtifactObjectNew;
 import ru.zont.mvc.core.Client;
 import ru.zont.mvc.core.Request;
 
@@ -350,17 +344,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickGuess(View v) {
-        File file = new File(getCacheDir(), "test.png"); // FIXME
-        try {
-            BitmapHandler.getBitmap(this).compress(Bitmap.CompressFormat.PNG, 100, new FileOutputStream(file));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        CropImage.activity(Uri.fromFile(file))
-                .setGuidelines(CropImageView.Guidelines.ON)
-                .start(this);
+        ArtifactObjectNew.ImageItem item = new ArtifactObjectNew.ImageItem("https://ya-webdesign.com/images/star-platinum-png-4.png");
+        startActivityForResult(new Intent(this, MarkActivity.class)
+                .putExtra("item", item), 1337);
 
 //        EditText view = new EditText(this);
 //        view.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
@@ -391,6 +377,13 @@ public class MainActivity extends AppCompatActivity {
 //                    }).start();
 //                })
 //                .create().show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == 1337 && data != null) {
+            Log.d(MarkActivity.class.getName(), "Result:\n" + ((ArtifactObjectNew.ImageItem) data.getParcelableExtra("item")).layout.toString());
+        }
     }
 
     public void onClickAdd(View v) {
