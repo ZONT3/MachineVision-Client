@@ -109,7 +109,10 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
     }
 
     void delete(ArtifactObject.Query q) {
-        int pos = dataset.indexOf(q);
+        int pos = -1;
+        for (DataItem item : dataset)
+            if (item.query != null && item.query.title.equals(q.title))
+                pos = dataset.indexOf(item);
         if (pos < 0) return;
 
         dataset.remove(pos);

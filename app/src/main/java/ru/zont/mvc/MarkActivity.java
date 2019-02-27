@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.theartofdev.edmodo.cropper.CropImageView;
 
+import java.io.IOException;
 import java.util.Objects;
 
 import ru.zont.mvc.core.ArtifactObject;
@@ -40,7 +41,7 @@ public class MarkActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mark);
-        setSupportActionBar(findViewById(R.id.mark_tb));
+        setSupportActionBar(findViewById(R.id.mark_tb)); //TODO プログレス
 
         cropImageView = findViewById(R.id.mark_cropView);
         loading = findViewById(R.id.mark_loading);
@@ -95,25 +96,28 @@ public class MarkActivity extends AppCompatActivity {
                     loading.postOnAnimation(() -> loading.setVisibility(View.GONE));
                 });
 
-                if (bitmap == null) {
-                    if (query != null) {
-                        Toast.makeText(this, R.string.mark_trouble, Toast.LENGTH_LONG).show();
-                        query.whitelist.remove(item);
-                        nextItem();
-                        reloadView();
-                    } else {
-                        setResult(RESULT_CANCELED);
-                        finish();
-                    }
-                    return;
-                }
-
                 runOnUiThread(() -> {
                     cropImageView.setImageBitmap(bitmap);
                     if (initialPos != null)
                         cropImageView.setCropRect(initialPos);
                 });
-            } catch (InterruptedException ignored) { }
+            } catch (InterruptedException ignored) {
+            } catch (IOException e) {
+                e.printStackTrace();
+
+                runOnUiThread(() -> {
+                    if (query != null) {
+                        Toast.makeText(this, R.string.mark_troubleRm, Toast.LENGTH_LONG).show();
+                        query.whitelist.remove(item);
+                        nextItem();
+                        reloadView();
+                    } else {
+                        Toast.makeText(this, R.string.mark_trouble, Toast.LENGTH_LONG).show();
+                        setResult(RESULT_CANCELED);
+                        finish();
+                    }
+                });
+            }
         });
         loaderThread.setPriority(Thread.MAX_PRIORITY);
         loaderThread.start();
@@ -161,7 +165,7 @@ public class MarkActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
-    private boolean onDeleteItemClick(MenuItem menuItem) {
+    private boolean onDeleteItemClick(MenuItem menuItem) { //TODO ここでデリート
         String title = menuItem.getTitle().toString();
         if (title.matches("\\d+")) {
             try {

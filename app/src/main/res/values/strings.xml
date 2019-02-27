@@ -72,6 +72,7 @@
     <string name="add">Add</string>
     <string name="done">Done</string>
     <string name="mark_loading">Loading image...</string>
-    <string name="mark_trouble">Trouble with loading image, removing it..</string>
+    <string name="mark_troubleRm">Trouble with loading image, removing it..</string>
     <string name="mark_deleteall">Remove all</string>
+    <string name="mark_trouble">Trouble with loading this image</string>
 </resources>

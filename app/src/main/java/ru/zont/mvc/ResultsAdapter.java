@@ -54,14 +54,19 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         int was = getItemCount();
         intentions += count;
         offset += count;
-        notifyItemRangeInserted(was, getItemCount());
+        if (count >= 0)
+            notifyItemRangeInserted(was, getItemCount());
+        else {
+            notifyItemRangeRemoved(was + count, was);
+            notifyItemRangeChanged(was + count, was);
+        }
     }
 
-    void addImages(String[] urls, int intentionWas) {
+    void addImages(String[] urls, int expectedCount) {
         int startIntentPos = query.whitelist.size();
         int oldSize = getItemCount();
 
-        intentions -= intentionWas;
+        intentions -= expectedCount;
         if (intentions < 0 ) intentions = 0;
 
         query.addNewImages(urls);
@@ -141,10 +146,13 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         });
     }
 
-    private synchronized void onLoadFailed(String reqID, VH vh, String url) {
-        if (!reqID.equals(vh.id)) return;
+    private void onLoadFailed(String reqID, VH vh, String url) {
+//        if (!reqID.equals(vh.id)) return;
 
-        int i = query.whitelist.indexOf(url);
+        int i = -1;
+        for (ArtifactObject.ImageItem item : query.whitelist)
+            if (item.link.equals(url))
+                i = query.whitelist.indexOf(item);
         if (i < 0) return;
 
         query.whitelist.remove(i);
@@ -152,7 +160,7 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         notifyItemRangeChanged(i, query.whitelist.size());
     }
 
-    private synchronized void onResourceReady(String reqID, VH vh) {
+    private void onResourceReady(String reqID, VH vh) {
         if (!reqID.equals(vh.id)) return;
         vh.pb.setVisibility(View.GONE);
         vh.thumbnail.setVisibility(View.VISIBLE);

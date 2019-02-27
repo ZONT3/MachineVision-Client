@@ -12,21 +12,15 @@ import android.support.annotation.Nullable;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 
 import ru.zont.mvc.core.ArtifactObject;
 
-public class BitmapHandler {
-    static Bitmap getBitmap(Context context) {
-        ArtifactObject.ImageItem item = new ArtifactObject.ImageItem("https://ya-webdesign.com/images/star-platinum-png-4.png");
-        item.addLayout(new Integer[]{313, 51, 484, 247});
-        item.addLayout(new Integer[]{464, 103, 589, 294});
-
-        return getBitmap(context, item, null);
-    }
-
-    static synchronized Bitmap getBitmap(Context context, @NonNull ArtifactObject.ImageItem item, @Nullable ArrayList<Integer> hide) {
+class BitmapHandler {
+    static synchronized Bitmap getBitmap(Context context, @NonNull ArtifactObject.ImageItem item,
+                                         @Nullable ArrayList<Integer> hide) throws IOException {
         if (!item.link.startsWith("http")) return null;
 
         File temp = new File(context.getCacheDir(), "BHtemp");
@@ -38,26 +32,21 @@ public class BitmapHandler {
             int bytesRead;
             while ((bytesRead = in.read(buff, 0, 1024)) != -1)
                 fos.write(buff, 0, bytesRead);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
 
-        Bitmap bitmap = BitmapFactory.decodeFile(temp.getAbsolutePath())
-                .copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap source = BitmapFactory.decodeFile(temp.getAbsolutePath());
+        if (source == null) throw new IOException("Cannot load image");
+
+        Bitmap bitmap = source.copy(Bitmap.Config.ARGB_8888, true);
         for (int i = 0; i < item.layout.size(); i++) {
             if (hide != null && hide.contains(i)) continue;
 
             Canvas canvas = new Canvas(bitmap);
             Paint p = new Paint();
-            p.setColor(Color.rgb(0 , 180, 0));
+            p.setColor(Color.rgb(0 , 220, 0));
             p.setStyle(Paint.Style.STROKE);
-            p.setStrokeWidth(8);
+            p.setStrokeWidth(3);
             canvas.drawRect(item.getRect(i), p);
-            p.setColor(Color.rgb(0, 220, 0));
-            p.setStrokeWidth(5);
-            canvas.drawRect(item.getRect(i).left + 1f, item.getRect(i).top + 1f,
-                    item.getRect(i).right - 1f, item.getRect(i).bottom - 1f, p);
 
             Paint p1 = new Paint();
             p1.setColor(Color.BLACK);

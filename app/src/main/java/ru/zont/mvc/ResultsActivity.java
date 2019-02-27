@@ -118,7 +118,7 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) { //TODO ここでマーキング
         getMenuInflater().inflate(R.menu.results, menu);
         return super.onCreateOptionsMenu(menu);
     }
