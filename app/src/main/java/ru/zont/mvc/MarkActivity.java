@@ -1,11 +1,10 @@
 package ru.zont.mvc;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -42,7 +41,7 @@ public class MarkActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mark);
-        setSupportActionBar(findViewById(R.id.mark_tb)); //TODO プログレス
+        setSupportActionBar(findViewById(R.id.mark_tb));
 
         cropImageView = findViewById(R.id.mark_cropView);
         loading = findViewById(R.id.mark_loading);
@@ -66,7 +65,13 @@ public class MarkActivity extends AppCompatActivity {
 
     private synchronized void reloadView() { reloadView(null); }
 
+    @SuppressLint("DefaultLocale")
     private synchronized void reloadView(Rect initialPos) {
+        if (query != null)
+            Objects.requireNonNull(getSupportActionBar())
+                    .setSubtitle(String.format("%s (%d/%d)", query.title,
+                            query.whitelist.indexOf(item) + 1, query.whitelist.size()));
+
         if (loaderThread != null && loaderThread.isAlive())
             loaderThread.interrupt();
         Thread oldThread = loaderThread;
@@ -104,8 +109,7 @@ public class MarkActivity extends AppCompatActivity {
                     if (query != null) {
                         Toast.makeText(this, R.string.mark_troubleRm, Toast.LENGTH_LONG).show();
                         query.whitelist.remove(item);
-                        nextItem();
-                        reloadView();
+                        if (nextItem()) reloadView();
                     } else {
                         Toast.makeText(this, R.string.mark_trouble, Toast.LENGTH_LONG).show();
                         setResult(RESULT_CANCELED);
@@ -132,16 +136,8 @@ public class MarkActivity extends AppCompatActivity {
         loaderThread.start();
     }
 
-    @Nullable
-    static ArtifactObject.ImageItem nextItem(@NonNull ArtifactObject.Query query) {
-        ArtifactObject.ImageItem itm = null;
-        for (ArtifactObject.ImageItem i : query.whitelist)
-            if (i.layout.size() == 0) itm = i;
-        return itm;
-    }
-
     private boolean nextItem() {
-        ArtifactObject.ImageItem itm = nextItem(query);
+        ArtifactObject.ImageItem itm = ArtifactObject.nextItem(query);
         if (itm == null) {
             Log.d(MarkActivity.class.getName(), "Unmarked items not found");
             setResult(RESULT_OK, resultData.putExtra(EXTRA_QUERY, query));
@@ -158,8 +154,9 @@ public class MarkActivity extends AppCompatActivity {
 
         if (item != null) {
             menu.findItem(R.id.mark_menu_done).setVisible(!(query != null && item.layout.size() == 0));
+            menu.findItem(R.id.mark_menu_delete).setVisible(query != null);
 
-            MenuItem del = menu.findItem(R.id.mark_menu_delete);
+            MenuItem del = menu.findItem(R.id.mark_menu_remove);
             del.setVisible(item.layout.size() > 0);
             if (item.layout.size() > 1) {
                 del.getSubMenu().add(R.string.mark_deleteall)
@@ -174,7 +171,7 @@ public class MarkActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
-    private boolean onDeleteItemClick(MenuItem menuItem) { //TODO ここでデリート
+    private boolean onDeleteItemClick(MenuItem menuItem) {
         String title = menuItem.getTitle().toString();
         if (title.matches("\\d+")) {
             try {
@@ -221,13 +218,17 @@ public class MarkActivity extends AppCompatActivity {
                     }
                 } else onBackPressed();
                 return true;
-            case R.id.mark_menu_delete:
+            case R.id.mark_menu_remove:
                 if (this.item.layout.size() == 1) {
                     Integer[] rect = this.item.layout.get(0);
                     this.item.layout.remove(0);
                     reloadView(new Rect(rect[0], rect[1], rect[2], rect[3]));
                     invalidateOptionsMenu();
                 } else return false;
+                return true;
+            case R.id.mark_menu_delete:
+                query.whitelist.remove(this.item);
+                if (nextItem()) reloadView();
                 return true;
         }
     }

@@ -4,6 +4,7 @@ import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -12,6 +13,7 @@ import java.util.Random;
 @SuppressWarnings({"unchecked", "CanBeFinal"})
 public class ArtifactObject implements Parcelable {
     public abstract class STATUS {
+
         public static final int ERROR = -99;
         public static final int ERROR_LEARN = -1;
         public static final int READY_TL = 0;
@@ -20,17 +22,17 @@ public class ArtifactObject implements Parcelable {
         public static final int READY_FU = 3;
         public static final int OUTDATED = 4;
     }
-
     public abstract class ACTION {
+
         public static final int CREATED = 0;
         public static final int EDITED = 1;
         public static final int STARTED_TRAINING = 2;
         public static final int TRAINED = 3;
     }
-
     private String id = new RandomString(16, new Random()).nextString();
 
     private String title;
+
     private ArrayList<Query> queries;
     private String thumbnail;
     private int status;
@@ -41,7 +43,6 @@ public class ArtifactObject implements Parcelable {
     private boolean enabled;
 
     //private ArrayList<File> customImages;
-
     public ArtifactObject(String title, ArrayList<Query> queries/*, ArrayList<File> customImages*/) {
         this.title = title;
         this.queries = queries;
@@ -99,9 +100,9 @@ public class ArtifactObject implements Parcelable {
     }
 
     public static class ImageItem implements Parcelable {
+
         public String link;
         public ArrayList<Integer[]> layout;
-
         public ImageItem(String link) {
             this.link = link;
             layout = new ArrayList<>();
@@ -126,6 +127,14 @@ public class ArtifactObject implements Parcelable {
         private ImageItem(Parcel in) {
             link = in.readString();
             layout = in.readArrayList(Integer[].class.getClassLoader());
+        }
+
+        @Override
+        public boolean equals(@Nullable Object obj) {
+            return obj instanceof ImageItem
+                    ? ((ImageItem) obj).link.equals(link)
+                            && ((ImageItem) obj).layout.equals(layout)
+                    : super.equals(obj);
         }
 
         public static final Creator<ImageItem> CREATOR = new Creator<ImageItem>() {
@@ -156,12 +165,12 @@ public class ArtifactObject implements Parcelable {
         public String toString() {
             return link != null ? link : super.toString();
         }
-    }
 
+    }
     public static class Query implements Parcelable {
+
         public String title;
         public ArrayList<ImageItem> whitelist;
-
         public Query(String title) {
             this.title = title;
             whitelist = new ArrayList<>();
@@ -210,6 +219,21 @@ public class ArtifactObject implements Parcelable {
             dest.writeString(title);
             dest.writeList(whitelist);
         }
+    }
+
+    public boolean hasUnmarked() {
+        for (Query q : queries)
+            if (nextItem(q) != null)
+                return true;
+        return false;
+    }
+
+    @Nullable
+    public static ImageItem nextItem(@NonNull Query query) {
+        for (ImageItem i : query.whitelist)
+            if (i.layout.size() == 0)
+                return i;
+        return null;
     }
 
     @NonNull

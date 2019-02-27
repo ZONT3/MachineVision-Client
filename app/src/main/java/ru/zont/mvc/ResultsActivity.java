@@ -22,9 +22,11 @@ import ru.zont.mvc.core.ArtifactObject;
 import ru.zont.mvc.core.Dimension;
 
 import static ru.zont.mvc.MarkActivity.EXTRA_ITEM;
+import static ru.zont.mvc.MarkActivity.EXTRA_QUERY;
 
 public class ResultsActivity extends AppCompatActivity {
-    private static final int MARK_REQUEST = 873;
+    private static final int REQUEST_MARK = 873;
+    private static final int REQUEST_MARK_ALL = 874;
 
     private ResultsAdapter adapter;
     private int spanCount;
@@ -63,19 +65,11 @@ public class ResultsActivity extends AppCompatActivity {
 
     private void onItemClick(ArtifactObject.ImageItem item) {
         startActivityForResult(new Intent(this, MarkActivity.class)
-                .putExtra(EXTRA_ITEM, item), MARK_REQUEST);
+                .putExtra(EXTRA_ITEM, item), REQUEST_MARK);
     }
 
     private void onItemLongClick(ArtifactObject.ImageItem item) {
         setResult(RESULT_OK, resultData.putExtra("newThumb", item.link));
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == MARK_REQUEST && resultCode == RESULT_OK
-                && data != null && data.hasExtra(EXTRA_ITEM)) {
-            adapter.modifyItem(data.getParcelableExtra(EXTRA_ITEM));
-        }
     }
 
     public void onClickMore(View v) {
@@ -118,7 +112,7 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) { //TODO ここでマーキング
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.results, menu);
         return super.onCreateOptionsMenu(menu);
     }
@@ -129,6 +123,10 @@ public class ResultsActivity extends AppCompatActivity {
             case R.id.results_menu_delete:
                 setResult(RESULT_OK, resultData.putExtra("delete", adapter.getQuery()));
                 finish();
+                return true;
+            case R.id.results_menu_mark:
+                startActivityForResult(new Intent(this, MarkActivity.class)
+                        .putExtra(EXTRA_QUERY, adapter.getQuery()), REQUEST_MARK_ALL);
                 return true;
             default: return super.onOptionsItemSelected(item);
         }
@@ -163,5 +161,14 @@ public class ResultsActivity extends AppCompatActivity {
     public void finish() {
         setResult(RESULT_OK, resultData.putExtra("query", adapter.getQuery()));
         super.finish();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == REQUEST_MARK && resultCode == RESULT_OK
+                && data != null && data.hasExtra(EXTRA_ITEM))
+            adapter.modifyItem(data.getParcelableExtra(EXTRA_ITEM));
+        else if (requestCode == REQUEST_MARK_ALL && data != null && data.hasExtra(EXTRA_QUERY))
+            adapter.replaceDataset(data.getParcelableExtra(EXTRA_QUERY));
     }
 }

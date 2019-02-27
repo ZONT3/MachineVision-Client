@@ -3,8 +3,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/mark_menu_delete"
-        android:icon="@drawable/ic_baseline_remove_24px"
+        android:icon="@drawable/ic_baseline_delete"
         android:title="@string/delete"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/mark_menu_remove"
+        android:icon="@drawable/ic_baseline_remove_24px"
+        android:title="@string/remove"
         app:showAsAction="ifRoom">
         <menu />
     </item>

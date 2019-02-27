@@ -75,4 +75,7 @@
     <string name="mark_troubleRm">Trouble with loading image, removing it..</string>
     <string name="mark_deleteall">Remove all</string>
     <string name="mark_trouble">Trouble with loading this image</string>
+    <string name="edit_marking">Would you like to mark data now?</string>
+    <string name="remove">Remove</string>
+    <string name="results_mark">Mark data</string>
 </resources>

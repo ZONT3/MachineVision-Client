@@ -3,6 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/results_menu_mark"
+        android:icon="@drawable/ic_baseline_crop_24px"
+        android:title="@string/results_mark"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/results_menu_delete"
         android:icon="@drawable/ic_baseline_delete"
         android:title="@string/main_op_delete"

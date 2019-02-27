@@ -172,7 +172,7 @@ public class EditActivity extends AppCompatActivity {
         }
     }
 
-    private boolean canSave() {
+    private boolean canSave(boolean gotoMarking) {
         if (title.getText().toString().isEmpty()) {
             Toast.makeText(this, R.string.edit_err_title_void, Toast.LENGTH_LONG).show();
             return false;
@@ -182,10 +182,22 @@ public class EditActivity extends AppCompatActivity {
             return false;
         }
 
-        for (ArtifactObject.Query query : adapter.getQueries()) { //TODO Marking is not required, but cannot training w\o it
-            if (MarkActivity.nextItem(query) != null) {
-                startActivityForResult(new Intent(this, MarkActivity.class)
-                        .putExtra(EXTRA_QUERY, query), REQUEST_MARKING);
+        for (ArtifactObject.Query query : adapter.getQueries()) {
+            if (ArtifactObject.nextItem(query) != null) {
+                if (gotoMarking)
+                    startActivityForResult(new Intent(this, MarkActivity.class)
+                            .putExtra(EXTRA_QUERY, query), REQUEST_MARKING);
+                else {
+                    new AlertDialog.Builder(this)
+                            .setTitle(R.string.edit_marking)
+                            .setNegativeButton(android.R.string.no, (il, i2) ->
+                                    trySaveAndFinish(false, true))
+                            .setPositiveButton(android.R.string.yes, (i1, i2) ->
+                                    startActivityForResult(new Intent(this, MarkActivity.class)
+                                            .putExtra(EXTRA_QUERY, query), REQUEST_MARKING))
+                            .setCancelable(false)
+                            .create().show();
+                }
                 return false;
             }
         }
@@ -194,7 +206,15 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private void trySaveAndFinish() {
-        if (!canSave()) return;
+        trySaveAndFinish(false);
+    }
+
+    private void trySaveAndFinish(boolean gotoMarking) {
+        trySaveAndFinish(gotoMarking, false);
+    }
+
+    private void trySaveAndFinish(boolean gotoMarking, boolean skipCheck) {
+        if (!skipCheck && !canSave(gotoMarking)) return;
 
         title.setEnabled(false);
         View content = findViewById(R.id.edit_content);
@@ -264,7 +284,7 @@ public class EditActivity extends AppCompatActivity {
                 adapter.updateQuery(data.getParcelableExtra("query"));
         } else if (requestCode == REQUEST_MARKING && data != null && data.hasExtra(EXTRA_QUERY)) {
             adapter.updateQuery(data.getParcelableExtra(EXTRA_QUERY));
-            if (resultCode == RESULT_OK) trySaveAndFinish();
+            if (resultCode == RESULT_OK) trySaveAndFinish(true);
         }
     }
 

@@ -79,6 +79,11 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
                 query.whitelist.set(query.whitelist.indexOf(item), newInstance);
     }
 
+    void replaceDataset(ArtifactObject.Query newDataset) {
+        query = newDataset;
+        notifyDataSetChanged();
+    }
+
     void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
