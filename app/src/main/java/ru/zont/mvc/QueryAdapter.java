@@ -156,7 +156,7 @@ class QueryAdapter extends RecyclerView.Adapter<QueryAdapter.VH> {
                     final int finalJ = j;
                     final String id = vh.id;
                     Glide.with(context)
-                            .load(item.get().whitelist.get(j))
+                            .load(item.get().whitelist.get(j).link)
                             .addListener(new RequestListener<Drawable>() {
                                 @Override
                                 public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {

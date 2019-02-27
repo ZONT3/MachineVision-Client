@@ -12,12 +12,12 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         android:elevation="3dp"
-        android:theme="@style/AppThemeDark"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="@string/mark_title" />
+        app:title="@string/mark_title"
+        app:titleTextColor="@android:color/primary_text_dark" />
 
     <com.theartofdev.edmodo.cropper.CropImageView
         android:id="@+id/mark_cropView"

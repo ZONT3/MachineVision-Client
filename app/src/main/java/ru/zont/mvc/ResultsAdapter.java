@@ -18,7 +18,6 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
-import java.util.Collections;
 import java.util.Random;
 
 import ru.zont.mvc.core.ArtifactObject;
@@ -65,15 +64,21 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         intentions -= intentionWas;
         if (intentions < 0 ) intentions = 0;
 
-        Collections.addAll(query.whitelist, urls);
+        query.addNewImages(urls);
         notifyItemRangeChanged(startIntentPos, oldSize);
     }
 
-    private void setOnItemClickListener(OnItemClickListener listener) {
+    void modifyItem(ArtifactObject.ImageItem newInstance) {
+        for (ArtifactObject.ImageItem item : query.whitelist)
+            if (item.link.equals(newInstance.link))
+                query.whitelist.set(query.whitelist.indexOf(item), newInstance);
+    }
+
+    void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
 
-    private void setOnItemLongClickListener(OnItemLongClickListener listener) {
+    void setOnItemLongClickListener(OnItemLongClickListener listener) {
         longListener = listener;
     }
 
@@ -97,7 +102,8 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         if (i < 4) vh.thumbnail.setTransitionName("IW" + (i+1));
         else vh.thumbnail.setTransitionName("NULL");
 
-        String url = query.whitelist.get(i);
+        ArtifactObject.ImageItem imageItem = query.whitelist.get(i);
+        String url = imageItem.link;
         Context context = vh.itemView.getContext();
 
         final String id = new RandomString(8, new Random()).nextString();
@@ -126,11 +132,11 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
 
         vh.itemView.setOnClickListener(v -> {
             if (listener != null)
-                listener.onItemClick(url);
+                listener.onItemClick(imageItem);
         });
         vh.itemView.setOnLongClickListener(v -> {
             if (longListener != null)
-                longListener.onItemLongClick(url);
+                longListener.onItemLongClick(imageItem);
             return true;
         });
     }
@@ -158,11 +164,11 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
     }
 
     interface OnItemClickListener {
-        void onItemClick(String url);
+        void onItemClick(ArtifactObject.ImageItem item);
     }
 
     interface OnItemLongClickListener {
-        void onItemLongClick(String url);
+        void onItemLongClick(ArtifactObject.ImageItem item);
     }
 
 

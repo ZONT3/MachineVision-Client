@@ -18,19 +18,21 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.util.Objects;
 
-import ru.zont.mvc.core.ArtifactObjectNew;
+import ru.zont.mvc.core.ArtifactObject;
 
 public class MarkActivity extends AppCompatActivity {
     static final String EXTRA_ITEM = "item";
     static final String EXTRA_QUERY = "query";
 
-    private ArtifactObjectNew.Query query;
-    private ArtifactObjectNew.ImageItem item;
+    private ArtifactObject.Query query;
+    private ArtifactObject.ImageItem item;
 
     private CropImageView cropImageView;
     private ViewGroup loading;
 
     private Thread loaderThread;
+
+    private Intent resultData = new Intent();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,9 +105,12 @@ public class MarkActivity extends AppCompatActivity {
                     }
                     return;
                 }
-                cropImageView.setImageBitmap(bitmap);
-                if (initialPos != null)
-                    cropImageView.setCropRect(initialPos);
+
+                runOnUiThread(() -> {
+                    cropImageView.setImageBitmap(bitmap);
+                    if (initialPos != null)
+                        cropImageView.setCropRect(initialPos);
+                });
             } catch (InterruptedException ignored) { }
         });
         loaderThread.setPriority(Thread.MAX_PRIORITY);
@@ -113,12 +118,12 @@ public class MarkActivity extends AppCompatActivity {
     }
 
     private boolean nextItem() {
-        ArtifactObjectNew.ImageItem itm = null;
-        for (ArtifactObjectNew.ImageItem i : query.whitelist)
+        ArtifactObject.ImageItem itm = null;
+        for (ArtifactObject.ImageItem i : query.whitelist)
             if (i.layout.size() == 0) itm = i;
         if (itm == null) {
             Log.d(MarkActivity.class.getName(), "Unmarked items not found");
-            setResult(RESULT_OK, new Intent().putExtra("query", query));
+            setResult(RESULT_OK, resultData.putExtra(EXTRA_QUERY, query));
             finish();
             return false;
         }
@@ -131,18 +136,53 @@ public class MarkActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.mark, menu);
 
         if (item != null) {
-            menu.findItem(R.id.mark_menu_done).setEnabled(!(query != null && item.layout.size() == 0));
-            menu.findItem(R.id.mark_menu_delete).setEnabled(item.layout.size() > 0);
+            menu.findItem(R.id.mark_menu_done).setVisible(!(query != null && item.layout.size() == 0));
+
+            MenuItem del = menu.findItem(R.id.mark_menu_delete);
+            del.setVisible(item.layout.size() > 0);
+            if (item.layout.size() > 1) {
+                del.getSubMenu().add(R.string.mark_deleteall)
+                        .setOnMenuItemClickListener(this::onDeleteItemClick);
+                for (int i = 0; i < item.layout.size(); i++) {
+                    MenuItem newitem = del.getSubMenu().add((i+1)+"");
+                    newitem.setOnMenuItemClickListener(this::onDeleteItemClick);
+                }
+            }
         }
 
         return super.onCreateOptionsMenu(menu);
     }
 
+    private boolean onDeleteItemClick(MenuItem menuItem) {
+        String title = menuItem.getTitle().toString();
+        if (title.matches("\\d+")) {
+            try {
+                Integer[] rect = this.item.layout.get(Integer.valueOf(title) - 1);
+                this.item.layout.remove(Integer.valueOf(title) - 1);
+                reloadView(new Rect(rect[0], rect[1], rect[2], rect[3]));
+                invalidateOptionsMenu();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return true;
+        } else if (title.equals(getString(R.string.mark_deleteall))) {
+            if (item.layout.size() > 0)
+                item.layout.subList(0, item.layout.size()).clear();
+
+            reloadView();
+            invalidateOptionsMenu();
+            return true;
+        } else return false;
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (loading.getVisibility() == View.VISIBLE) return super.onOptionsItemSelected(item);
+        if (loading.getVisibility() == View.VISIBLE || this.item == null)
+            return super.onOptionsItemSelected(item);
+
         switch (item.getItemId()) {
-            default: return super.onOptionsItemSelected(item);
+            default:
+                return super.onOptionsItemSelected(item);
             case R.id.mark_menu_add:
                 Rect selection = cropImageView.getCropRect();
                 this.item.addLayout(selection);
@@ -153,10 +193,15 @@ public class MarkActivity extends AppCompatActivity {
                 if (query != null && nextItem()) {
                     reloadView();
                     invalidateOptionsMenu();
-                } else {
-                    setResult(RESULT_OK, new Intent().putExtra("item", this.item));
-                    finish();
-                }
+                } else onBackPressed();
+                return true;
+            case R.id.mark_menu_delete:
+                if (this.item.layout.size() == 1) {
+                    Integer[] rect = this.item.layout.get(0);
+                    this.item.layout.remove(0);
+                    reloadView(new Rect(rect[0], rect[1], rect[2], rect[3]));
+                    invalidateOptionsMenu();
+                } else return false;
                 return true;
         }
     }
@@ -173,8 +218,14 @@ public class MarkActivity extends AppCompatActivity {
             new AlertDialog.Builder(this)
                     .setTitle(R.string.mark_exit)
                     .setNegativeButton(android.R.string.cancel, null)
-                    .setPositiveButton(android.R.string.yes, (i1, i2) -> super.onBackPressed())
+                    .setPositiveButton(android.R.string.yes, (i1, i2) -> {
+                        setResult(RESULT_CANCELED, resultData.putExtra(EXTRA_QUERY, this.query));
+                        super.onBackPressed();
+                    })
                     .create().show();
-        } else super.onBackPressed();
+        } else {
+            setResult(RESULT_OK, resultData.putExtra(EXTRA_ITEM, this.item));
+            super.onBackPressed();
+        }
     }
 }

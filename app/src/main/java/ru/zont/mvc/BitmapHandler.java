@@ -15,18 +15,18 @@ import java.io.FileOutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 
-import ru.zont.mvc.core.ArtifactObjectNew;
+import ru.zont.mvc.core.ArtifactObject;
 
 public class BitmapHandler {
     static Bitmap getBitmap(Context context) {
-        ArtifactObjectNew.ImageItem item = new ArtifactObjectNew.ImageItem("https://ya-webdesign.com/images/star-platinum-png-4.png");
+        ArtifactObject.ImageItem item = new ArtifactObject.ImageItem("https://ya-webdesign.com/images/star-platinum-png-4.png");
         item.addLayout(new Integer[]{313, 51, 484, 247});
         item.addLayout(new Integer[]{464, 103, 589, 294});
 
         return getBitmap(context, item, null);
     }
 
-    static synchronized Bitmap getBitmap(Context context, @NonNull ArtifactObjectNew.ImageItem item, @Nullable ArrayList<Integer> hide) {
+    static synchronized Bitmap getBitmap(Context context, @NonNull ArtifactObject.ImageItem item, @Nullable ArrayList<Integer> hide) {
         if (!item.link.startsWith("http")) return null;
 
         File temp = new File(context.getCacheDir(), "BHtemp");

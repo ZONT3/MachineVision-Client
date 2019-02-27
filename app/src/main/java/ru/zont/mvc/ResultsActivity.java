@@ -3,6 +3,7 @@ package ru.zont.mvc;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -20,11 +21,16 @@ import java.util.Objects;
 import ru.zont.mvc.core.ArtifactObject;
 import ru.zont.mvc.core.Dimension;
 
+import static ru.zont.mvc.MarkActivity.EXTRA_ITEM;
+
 public class ResultsActivity extends AppCompatActivity {
+    private static final int MARK_REQUEST = 873;
 
     private ResultsAdapter adapter;
     private int spanCount;
     private GridLayoutManager layoutManager;
+
+    private Intent resultData = new Intent();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +45,8 @@ public class ResultsActivity extends AppCompatActivity {
         ArtifactObject.Query query = getIntent().getParcelableExtra("query");
         if (query == null) {
             Toast.makeText(this, R.string.results_error, Toast.LENGTH_LONG).show();
+            setResult(RESULT_CANCELED);
+            finish();
             return;
         }
         actionBar.setTitle(query.title);
@@ -47,7 +55,28 @@ public class ResultsActivity extends AppCompatActivity {
         rw.setAdapter(adapter = new ResultsAdapter(query));
         rw.setLayoutManager(layoutManager = new GridLayoutManager(this, spanCount));
 
+        adapter.setOnItemClickListener(this::onItemClick);
+        adapter.setOnItemLongClickListener(this::onItemLongClick);
+
         findViewById(R.id.results_fab).setOnLongClickListener(this::onLongClickMore);
+    }
+
+    private void onItemClick(ArtifactObject.ImageItem item) {
+        startActivityForResult(new Intent(this, MarkActivity.class)
+                .putExtra(EXTRA_ITEM, item), MARK_REQUEST);
+    }
+
+    private void onItemLongClick(ArtifactObject.ImageItem item) {
+        setResult(RESULT_OK, resultData.putExtra("newThumb", item.link));
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == MARK_REQUEST && resultCode == RESULT_OK
+                && data != null && data.hasExtra(EXTRA_ITEM)) {
+            adapter.modifyItem(data.getParcelableExtra(EXTRA_ITEM));
+            setResult(RESULT_OK, resultData.putExtra("query", adapter.getQuery()));
+        }
     }
 
     public void onClickMore(View v) {
@@ -59,6 +88,7 @@ public class ResultsActivity extends AppCompatActivity {
                 (query, urls, e) -> onFetch(urls, e, count));
     }
 
+    @SuppressWarnings("unused")
     @SuppressLint("SetTextI18n")
     public boolean onLongClickMore(View v) {
         int count = adapter.getItemCount() % spanCount == 0
@@ -87,7 +117,7 @@ public class ResultsActivity extends AppCompatActivity {
         }
 
         adapter.addImages(urls, c);
-        setResult(RESULT_OK, new Intent().putExtra("query", adapter.getQuery()));
+        setResult(RESULT_OK, resultData.putExtra("query", adapter.getQuery()));
     }
 
     @Override
@@ -100,7 +130,7 @@ public class ResultsActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.results_menu_delete:
-                setResult(RESULT_OK, new Intent().putExtra("delete", adapter.getQuery()));
+                setResult(RESULT_OK, resultData.putExtra("delete", adapter.getQuery()));
                 finish();
                 return true;
             default: return super.onOptionsItemSelected(item);

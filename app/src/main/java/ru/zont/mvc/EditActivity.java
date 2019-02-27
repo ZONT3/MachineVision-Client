@@ -21,7 +21,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Objects;
 
 import ru.zont.mvc.core.ArtifactObject;
@@ -153,7 +152,7 @@ public class EditActivity extends AppCompatActivity {
         }
 
         ArtifactObject.Query queryInstance = new ArtifactObject.Query(query);
-        Collections.addAll(queryInstance.whitelist, urls);
+        queryInstance.addNewImages(urls);
         adapter.addQuery(queryInstance);
     }
 
@@ -201,11 +200,9 @@ public class EditActivity extends AppCompatActivity {
                 Thread.sleep(500);
             } catch (InterruptedException e) { e.printStackTrace(); return; }
             if (save()) finish();
-            else runOnUiThread(() -> {
-                Toast.makeText(this, "Error on saving", Toast.LENGTH_SHORT)
-                        .show();
-
-            });
+            else runOnUiThread(() ->
+                    Toast.makeText(this, "Error on saving", Toast.LENGTH_SHORT)
+                            .show());
         }).start();
     }
 
@@ -253,7 +250,8 @@ public class EditActivity extends AppCompatActivity {
         if (requestCode == 1337 && resultCode == RESULT_OK && data != null) {
             if (data.hasExtra("delete"))
                 adapter.delete(data.getParcelableExtra("delete"));
-            else adapter.updateQuery(data.getParcelableExtra("query"));
+            else if (data.hasExtra("query"))
+                adapter.updateQuery(data.getParcelableExtra("query"));
         }
     }
 

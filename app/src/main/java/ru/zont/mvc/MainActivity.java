@@ -1,11 +1,13 @@
 package ru.zont.mvc;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -35,13 +37,13 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
 import ru.zont.mvc.core.ArtifactObject;
-import ru.zont.mvc.core.ArtifactObjectNew;
 import ru.zont.mvc.core.Client;
 import ru.zont.mvc.core.Request;
 
@@ -344,45 +346,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickGuess(View v) {
-        ArtifactObjectNew.ImageItem item = new ArtifactObjectNew.ImageItem("https://ya-webdesign.com/images/star-platinum-png-4.png");
-        startActivityForResult(new Intent(this, MarkActivity.class)
-                .putExtra("item", item), 1337);
+        EditText view = new EditText(this);
+        view.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        new AlertDialog.Builder(this)
+                .setTitle("Enter URL of image")
+                .setView(view)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    ProgressDialog pd = new ProgressDialog(this);
+                    pd.setCancelable(false);
+                    pd.create();
+                    pd.show();
 
-//        EditText view = new EditText(this);
-//        view.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-//        new AlertDialog.Builder(this)
-//                .setTitle("Enter URL of image")
-//                .setView(view)
-//                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-//                    ProgressDialog pd = new ProgressDialog(this);
-//                    pd.setCancelable(false);
-//                    pd.create();
-//                    pd.show();
-//
-//                    new Thread(() -> {
-//                        HashMap<String, String> request = new HashMap<>();
-//                        request.put("request_code", "guess");
-//                        request.put("url", view.getText().toString());
-//
-//                        try {
-//                            String response = Client.sendJsonForResult(new Gson().toJson(request), 1200000);
-//                            URL url = new URL(response);
-//                            startActivity(new Intent(Intent.ACTION_VIEW)
-//                                    .setDataAndType(Uri.parse(url.toString()), "image/*"));
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        } finally {
-//                            pd.dismiss();
-//                        }
-//                    }).start();
-//                })
-//                .create().show();
+                    new Thread(() -> {
+                        HashMap<String, String> request = new HashMap<>();
+                        request.put("request_code", "guess");
+                        request.put("url", view.getText().toString());
+
+                        try {
+                            String response = Client.sendJsonForResult(new Gson().toJson(request), 1200000);
+                            URL url = new URL(response);
+                            startActivity(new Intent(Intent.ACTION_VIEW)
+                                    .setDataAndType(Uri.parse(url.toString()), "image/*"));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            pd.dismiss();
+                        }
+                    }).start();
+                })
+                .create().show();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == 1337 && data != null) {
-            Log.d(MarkActivity.class.getName(), "Result:\n" + ((ArtifactObjectNew.ImageItem) data.getParcelableExtra("item")).layout.toString());
+            Log.d(MarkActivity.class.getName(), "Result:\n" + ((ArtifactObject.ImageItem) data.getParcelableExtra("item")).layout.toString());
         }
     }
 

@@ -1,5 +1,6 @@
 package ru.zont.mvc.core;
 
+import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
@@ -50,7 +51,7 @@ public class ArtifactObject implements Parcelable {
         created = lastAct;
         learned = -1;
         enabled = true;
-        thumbnail = queries.get(0).whitelist.get(0);
+        thumbnail = queries.get(0).whitelist.get(0).link;
         //this.customImages = customImages;
     }
 
@@ -97,14 +98,83 @@ public class ArtifactObject implements Parcelable {
         if (learned >= 0) status = STATUS.OUTDATED;
     }
 
+    public static class ImageItem implements Parcelable {
+        public String link;
+        public ArrayList<Integer[]> layout;
+
+        public ImageItem(String link) {
+            this.link = link;
+            layout = new ArrayList<>();
+        }
+
+        public void addLayout(Rect selection) {
+            addLayout(new Integer[] {
+                    selection.left, selection.top,
+                    selection.right, selection.bottom });
+        }
+
+        public void addLayout(Integer[] newLay) {
+            if (newLay.length != 4) return;
+            layout.add(newLay);
+        }
+
+        public Rect getRect(int i) {
+            return new Rect(layout.get(i)[0], layout.get(i)[1],
+                    layout.get(i)[2], layout.get(i)[3]);
+        }
+
+        private ImageItem(Parcel in) {
+            link = in.readString();
+            layout = in.readArrayList(Integer[].class.getClassLoader());
+        }
+
+        public static final Creator<ImageItem> CREATOR = new Creator<ImageItem>() {
+            @Override
+            public ImageItem createFromParcel(Parcel in) {
+                return new ImageItem(in);
+            }
+
+            @Override
+            public ImageItem[] newArray(int size) {
+                return new ImageItem[size];
+            }
+        };
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeString(link);
+            dest.writeList(layout);
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return link != null ? link : super.toString();
+        }
+    }
+
     public static class Query implements Parcelable {
+        public String title;
+        public ArrayList<ImageItem> whitelist;
+
         public Query(String title) {
             this.title = title;
             whitelist = new ArrayList<>();
         }
 
-        public String title;
-        public ArrayList<String> whitelist;
+        public void addNewImage(String link) {
+            whitelist.add(new ImageItem(link));
+        }
+
+        public void addNewImages(String[] links) {
+            for (String s : links)
+                addNewImage(s);
+        }
 
         @Override
         public boolean equals(Object obj) {
@@ -127,7 +197,7 @@ public class ArtifactObject implements Parcelable {
 
         private Query(Parcel p) {
             title = p.readString();
-            whitelist = p.readArrayList(String.class.getClassLoader());
+            whitelist = p.readArrayList(ImageItem.class.getClassLoader());
         }
 
         @Override
