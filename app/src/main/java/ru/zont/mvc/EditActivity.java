@@ -182,7 +182,7 @@ public class EditActivity extends AppCompatActivity {
             return false;
         }
 
-        for (ArtifactObject.Query query : adapter.getQueries()) {
+        for (ArtifactObject.Query query : adapter.getQueries()) { //TODO Marking is not required, but cannot training w\o it
             if (MarkActivity.nextItem(query) != null) {
                 startActivityForResult(new Intent(this, MarkActivity.class)
                         .putExtra(EXTRA_QUERY, query), REQUEST_MARKING);
