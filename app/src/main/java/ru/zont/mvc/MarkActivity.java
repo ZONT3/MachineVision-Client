@@ -34,6 +34,7 @@ public class MarkActivity extends AppCompatActivity {
     private ViewGroup loading;
 
     private Thread loaderThread;
+    private boolean isLoading = false;
 
     private Intent resultData = new Intent();
 
@@ -70,13 +71,17 @@ public class MarkActivity extends AppCompatActivity {
             loaderThread.interrupt();
         Thread oldThread = loaderThread;
 
+        isLoading = true;
         loading.clearAnimation();
         cropImageView.clearAnimation();
         loading.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fadein));
         cropImageView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fadeout));
         loading.setVisibility(View.VISIBLE);
         cropImageView.setVisibility(View.VISIBLE);
-        cropImageView.postOnAnimation(() -> cropImageView.setVisibility(View.GONE));
+        cropImageView.postOnAnimation(() -> {
+            if (isLoading)
+                cropImageView.setVisibility(View.GONE);
+        });
 
         loaderThread = new Thread(() -> {
             try {
@@ -85,16 +90,6 @@ public class MarkActivity extends AppCompatActivity {
 
                 Bitmap bitmap = BitmapHandler.getBitmap(this, item, null);
                 if (Thread.currentThread().isInterrupted()) return;
-
-                runOnUiThread(() -> {
-                    cropImageView.clearAnimation();
-                    loading.clearAnimation();
-                    cropImageView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fadein));
-                    loading.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fadeout));
-                    cropImageView.setVisibility(View.VISIBLE);
-                    loading.setVisibility(View.VISIBLE);
-                    loading.postOnAnimation(() -> loading.setVisibility(View.GONE));
-                });
 
                 runOnUiThread(() -> {
                     cropImageView.setImageBitmap(bitmap);
@@ -116,6 +111,20 @@ public class MarkActivity extends AppCompatActivity {
                         setResult(RESULT_CANCELED);
                         finish();
                     }
+                });
+            } finally {
+                runOnUiThread(() -> {
+                    isLoading = false;
+                    cropImageView.clearAnimation();
+                    loading.clearAnimation();
+                    cropImageView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fadein));
+                    loading.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fadeout));
+                    cropImageView.setVisibility(View.VISIBLE);
+                    loading.setVisibility(View.VISIBLE);
+                    loading.postOnAnimation(() -> {
+                        if (!isLoading)
+                            loading.setVisibility(View.GONE);
+                    });
                 });
             }
         });
