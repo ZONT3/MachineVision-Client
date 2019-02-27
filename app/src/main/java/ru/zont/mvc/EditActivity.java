@@ -29,8 +29,11 @@ import ru.zont.mvc.core.Dimension;
 import ru.zont.mvc.core.Request;
 
 import static android.view.inputmethod.EditorInfo.IME_ACTION_DONE;
+import static ru.zont.mvc.MarkActivity.EXTRA_QUERY;
 
 public class EditActivity extends AppCompatActivity {
+    public static final int REQUEST_RESULTS = 1337;
+    public static final int REQUEST_MARKING = 322;
 
     private EditText title;
     private QueryAdapter adapter;
@@ -50,7 +53,7 @@ public class EditActivity extends AppCompatActivity {
 		title.setImeOptions(IME_ACTION_DONE);
 		title.setOnEditorActionListener((v, actionId, event) -> {
 		    if (actionId == IME_ACTION_DONE) {
-                startSaving();
+                trySaveAndFinish();
                 return true;
             } else return false;
         });
@@ -83,7 +86,7 @@ public class EditActivity extends AppCompatActivity {
 
                 Intent intent = new Intent(this, ResultsActivity.class)
                         .putExtra("query", item.get());
-                startActivityForResult(intent, 1337, ActivityOptions
+                startActivityForResult(intent, REQUEST_RESULTS, ActivityOptions
                         .makeSceneTransitionAnimation(this, content, iw1, iw2, iw3, iw4, tb)
                         .toBundle());
                 break;
@@ -162,14 +165,12 @@ public class EditActivity extends AppCompatActivity {
         else {
             new AlertDialog.Builder(this)
                     .setTitle(R.string.edit_save)
-                    .setPositiveButton(R.string.yes, this::startSaving)
+                    .setPositiveButton(R.string.yes, (i1, i2) -> trySaveAndFinish())
                     .setNegativeButton(R.string.no, (i1, i2) -> finish())
                     .setNeutralButton(android.R.string.cancel, null)
                     .create().show();
         }
     }
-
-    private void startSaving(DialogInterface di, int w) { startSaving(); }
 
     private boolean canSave() {
         if (title.getText().toString().isEmpty()) {
@@ -180,10 +181,19 @@ public class EditActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.edit_err_noquer, Toast.LENGTH_LONG).show();
             return false;
         }
+
+        for (ArtifactObject.Query query : adapter.getQueries()) {
+            if (MarkActivity.nextItem(query) != null) {
+                startActivityForResult(new Intent(this, MarkActivity.class)
+                        .putExtra(EXTRA_QUERY, query), REQUEST_MARKING);
+                return false;
+            }
+        }
+
         return true;
     }
 
-    private void startSaving() {
+    private void trySaveAndFinish() {
         if (!canSave()) return;
 
         title.setEnabled(false);
@@ -234,7 +244,7 @@ public class EditActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.edit_menu_save: startSaving(); return true;
+            case R.id.edit_menu_save: trySaveAndFinish(); return true;
             default: return super.onOptionsItemSelected(item);
         }
     }
@@ -247,11 +257,14 @@ public class EditActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == 1337 && resultCode == RESULT_OK && data != null) {
+        if (requestCode == REQUEST_RESULTS && resultCode == RESULT_OK && data != null) {
             if (data.hasExtra("delete"))
                 adapter.delete(data.getParcelableExtra("delete"));
             else if (data.hasExtra("query"))
                 adapter.updateQuery(data.getParcelableExtra("query"));
+        } else if (requestCode == REQUEST_MARKING && data != null && data.hasExtra(EXTRA_QUERY)) {
+            adapter.updateQuery(data.getParcelableExtra(EXTRA_QUERY));
+            if (resultCode == RESULT_OK) trySaveAndFinish();
         }
     }
 

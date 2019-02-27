@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -53,7 +55,7 @@ public class MarkActivity extends AppCompatActivity {
 
         if (query != null) {
             Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-            nextItem();
+            if (!nextItem()) return;
         }
 
         reloadView();
@@ -117,10 +119,16 @@ public class MarkActivity extends AppCompatActivity {
         loaderThread.start();
     }
 
-    private boolean nextItem() {
+    @Nullable
+    static ArtifactObject.ImageItem nextItem(@NonNull ArtifactObject.Query query) {
         ArtifactObject.ImageItem itm = null;
         for (ArtifactObject.ImageItem i : query.whitelist)
             if (i.layout.size() == 0) itm = i;
+        return itm;
+    }
+
+    private boolean nextItem() {
+        ArtifactObject.ImageItem itm = nextItem(query);
         if (itm == null) {
             Log.d(MarkActivity.class.getName(), "Unmarked items not found");
             setResult(RESULT_OK, resultData.putExtra(EXTRA_QUERY, query));
@@ -190,9 +198,14 @@ public class MarkActivity extends AppCompatActivity {
                 invalidateOptionsMenu();
                 return true;
             case R.id.mark_menu_done:
-                if (query != null && nextItem()) {
-                    reloadView();
-                    invalidateOptionsMenu();
+                if (query != null) {
+                    if (nextItem()) {
+                        reloadView();
+                        invalidateOptionsMenu();
+                    } else {
+                        setResult(RESULT_OK, resultData.putExtra(EXTRA_QUERY, this.query));
+                        finish();
+                    }
                 } else onBackPressed();
                 return true;
             case R.id.mark_menu_delete:

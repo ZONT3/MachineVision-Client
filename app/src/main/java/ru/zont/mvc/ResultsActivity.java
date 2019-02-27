@@ -75,7 +75,6 @@ public class ResultsActivity extends AppCompatActivity {
         if (requestCode == MARK_REQUEST && resultCode == RESULT_OK
                 && data != null && data.hasExtra(EXTRA_ITEM)) {
             adapter.modifyItem(data.getParcelableExtra(EXTRA_ITEM));
-            setResult(RESULT_OK, resultData.putExtra("query", adapter.getQuery()));
         }
     }
 
@@ -115,9 +114,7 @@ public class ResultsActivity extends AppCompatActivity {
                     .show();
             return;
         }
-
         adapter.addImages(urls, c);
-        setResult(RESULT_OK, resultData.putExtra("query", adapter.getQuery()));
     }
 
     @Override
@@ -160,5 +157,11 @@ public class ResultsActivity extends AppCompatActivity {
     public void finishAfterTransition() {
         findViewById(R.id.results_content).setTransitionName("NULL");
         super.finishAfterTransition();
+    }
+
+    @Override
+    public void finish() {
+        setResult(RESULT_OK, resultData.putExtra("query", adapter.getQuery()));
+        super.finish();
     }
 }
