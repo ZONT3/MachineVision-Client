@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.CircularProgressDrawable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,17 +17,13 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 
-import java.util.Random;
-
 import ru.zont.mvc.core.ArtifactObject;
-import ru.zont.mvc.core.RandomString;
 
 public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
     static class VH extends RecyclerView.ViewHolder {
-        private String id;
-
         private ImageView thumbnail;
         private ImageButton del;
         private ProgressBar pb;
@@ -105,9 +102,14 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
 
     @Override
     public void onBindViewHolder(@NonNull VH vh, int i) {
-        vh.pb.setVisibility(View.VISIBLE);
-        vh.thumbnail.setVisibility(View.INVISIBLE);
-        if (i >= query.whitelist.size()) return;
+        if (i >= query.whitelist.size()) {
+            vh.pb.setVisibility(View.VISIBLE);
+            vh.thumbnail.setVisibility(View.INVISIBLE);
+            return;
+        } else {
+            vh.pb.setVisibility(View.GONE);
+            vh.thumbnail.setVisibility(View.VISIBLE);
+        }
 
         if (i < 4) vh.thumbnail.setTransitionName("IW" + (i+1));
         else vh.thumbnail.setTransitionName("NULL");
@@ -116,20 +118,24 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         String url = imageItem.link;
         Context context = vh.itemView.getContext();
 
-        final String id = new RandomString(8, new Random()).nextString();
-        vh.id = id;
+        CircularProgressDrawable pd = new CircularProgressDrawable(context);
+        pd.setStrokeWidth(5);
+        pd.setCenterRadius(30);
+        pd.start();
+
         Glide.with(context)
                 .load(url)
+                .apply(new RequestOptions().placeholder(pd))
                 .listener(new RequestListener<Drawable>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        ResultsAdapter.this.onLoadFailed(id, vh, url);
+                        ResultsAdapter.this.onLoadFailed(url);
                         return false;
                     }
 
                     @Override
                     public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                        ResultsAdapter.this.onResourceReady(id, vh);
+//                        ResultsAdapter.this.onResourceReady(vh);
                         return false;
                     }
                 })
@@ -151,9 +157,7 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         });
     }
 
-    private void onLoadFailed(String reqID, VH vh, String url) {
-//        if (!reqID.equals(vh.id)) return;
-
+    private void onLoadFailed(String url) {
         int i = -1;
         for (ArtifactObject.ImageItem item : query.whitelist)
             if (item.link.equals(url))
@@ -165,11 +169,10 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
         notifyItemRangeChanged(i, query.whitelist.size());
     }
 
-    private void onResourceReady(String reqID, VH vh) {
-        if (!reqID.equals(vh.id)) return;
-        vh.pb.setVisibility(View.GONE);
-        vh.thumbnail.setVisibility(View.VISIBLE);
-    }
+//    private void onResourceReady(VH vh) {
+//        vh.pb.setVisibility(View.GONE);
+//        vh.thumbnail.setVisibility(View.VISIBLE);
+//    }
 
     @Override
     public int getItemCount() {

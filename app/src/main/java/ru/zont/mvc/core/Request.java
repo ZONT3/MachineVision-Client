@@ -21,7 +21,12 @@ public class Request {
     @NonNull
     @Override
     public String toString() {
-        String json = new Gson().toJson(data);
+        String json;
+        try { json = new Gson().toJson(data); }
+        catch (Throwable e) {
+            e.printStackTrace();
+            return super.toString();
+        }
         return json != null ? json : super.toString();
     }
 

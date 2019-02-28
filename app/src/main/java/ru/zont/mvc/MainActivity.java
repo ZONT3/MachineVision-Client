@@ -154,7 +154,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (seekerThread != null) seekerThread.interrupt();
     	getList();
-    	guess.show();
     	add.show();
     }
 
@@ -228,31 +227,34 @@ public class MainActivity extends AppCompatActivity {
 	    		} catch (InterruptedException e) {
 	    			Log.d("SeekerThread", "Interrupted while being sleeping");
 	    			break;
-	    		} catch (UnknownHostException ignored) { }
+	    		}
     		}
     	});
     	seekerThread.setPriority(Thread.MIN_PRIORITY);
     	seekerThread.start();
     }
 
-    private void checkIP(String prefix, int i) throws UnknownHostException {
-        String testIp = prefix + String.valueOf(i);
+    private void checkIP(String prefix, int i) {
+        try {
+            String testIp = prefix + String.valueOf(i);
 
-        InetAddress address = InetAddress.getByName(testIp);
-        String hostName = address.getCanonicalHostName();
+            InetAddress address = InetAddress.getByName(testIp);
+            String hostName = address.getCanonicalHostName();
 
-        if (!hostName.contains(testIp))
-            if (Client.tryConnection(testIp, port) == null) {
-                ip = testIp;
-                Client.setup(ip, port);
+            if (!hostName.contains(testIp)) {
+                if (Client.tryConnection(testIp, port) == null) {
+                    ip = testIp;
+                    Client.setup(ip, port);
+                }
             }
+        } catch (UnknownHostException ignored) { }
     }
 
     private void getList() {
-        new ListGetter(new ListGetter.AsyncRunnable() {
+        runOnUiThread(() -> new ListGetter(new ListGetter.AsyncRunnable() {
             @Override
             public void onPreExecute() {
-            	adapter.clear();
+                adapter.clear();
                 pb.setVisibility(View.VISIBLE);
             }
 
@@ -270,8 +272,11 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 adapter.updateDataset(objects);
+                if (objects.length > 0) guess.show();
+                else guess.hide();
             }
-        }).execute();
+        }).execute());
+
     }
 
     @SuppressWarnings("CanBeFinal")
@@ -393,13 +398,6 @@ public class MainActivity extends AppCompatActivity {
                     }).start();
                 })
                 .create().show();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == 1337 && data != null) {
-            Log.d(MarkActivity.class.getName(), "Result:\n" + ((ArtifactObject.ImageItem) data.getParcelableExtra("item")).layout.toString());
-        }
     }
 
     public void onClickAdd(View v) {
