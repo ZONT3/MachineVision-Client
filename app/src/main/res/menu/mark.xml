@@ -4,12 +4,12 @@
     <item
         android:id="@+id/mark_menu_delete"
         android:icon="@drawable/ic_baseline_delete"
-        android:title="@string/delete"
+        android:title="@string/mark_delete"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/mark_menu_remove"
         android:icon="@drawable/ic_baseline_remove_24px"
-        android:title="@string/remove"
+        android:title="@string/mark_remove"
         app:showAsAction="ifRoom">
         <menu />
     </item>
@@ -17,10 +17,10 @@
         android:id="@+id/mark_menu_add"
         android:icon="@drawable/baseline_add_white_48"
         android:title="@string/add"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
     <item
         android:id="@+id/mark_menu_done"
         android:icon="@drawable/ic_baseline_done_24px"
         android:title="@string/done"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
 </menu>

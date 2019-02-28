@@ -46,6 +46,8 @@ public class MarkActivity extends AppCompatActivity {
         cropImageView = findViewById(R.id.mark_cropView);
         loading = findViewById(R.id.mark_loading);
 
+        cropImageView.setMinCropResultSize(10,10);
+
         item = getIntent().getParcelableExtra(EXTRA_ITEM);
         query = getIntent().getParcelableExtra(EXTRA_QUERY);
 

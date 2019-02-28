@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -15,6 +16,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -64,11 +66,23 @@ public class MainActivity extends AppCompatActivity {
     private int port;
     private int connectionStatus;
 
+    private FloatingActionButton add;
+    private FloatingActionButton guess;
+
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setSupportActionBar(findViewById(R.id.main_toolbar));
+
+        ((TextView)findViewById(R.id.main_ver)).setText("Client v." + BuildConfig.VERSION_NAME);
+
+        guess = findViewById(R.id.main_guess);
+        add = findViewById(R.id.main_add);
+
+        guess.hide();
+        add.hide();
 
         RecyclerView recyclerView = findViewById(R.id.main_recycler);
         recyclerView.setHasFixedSize(true);
@@ -140,11 +154,15 @@ public class MainActivity extends AppCompatActivity {
 
         if (seekerThread != null) seekerThread.interrupt();
     	getList();
+    	guess.show();
+    	add.show();
     }
 
     private void onConnectionFailed() {
     	svst.setImageResource(android.R.drawable.presence_offline);
     	adapter.clear();
+        guess.hide();
+        add.hide();
 
     	Thread oldThread = null;
     	if (seekerThread != null && !seekerThread.isInterrupted()) {
@@ -406,6 +424,7 @@ public class MainActivity extends AppCompatActivity {
 
         title.setText(item.getTitle());
         status.setText(getStatusString(item, this));
+        status.setTextColor(getStatusColor(item));
         queries.setText(item.getQueriesSize()+"");
         total.setText(item.getTotal()+"");
         created.setText(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG)
@@ -415,8 +434,10 @@ public class MainActivity extends AppCompatActivity {
 
         boolean busy = item.getStatus() == ArtifactObject.STATUS.DOWNLOADING
                 || item.getStatus() == ArtifactObject.STATUS.TRAINING;
+        boolean canTrain = !item.hasUnmarked();
+
         svvitch.setEnabled(!busy);
-        train.setEnabled(!busy);
+        train.setEnabled(!busy && canTrain);
         edit.setEnabled(!busy);
         delete.setEnabled(!busy);
 
@@ -447,6 +468,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Client.sendJsonForResult(Request.create("delete_object")
                             .put("id", item.getId()).toString());
+                    getList();
                 } catch (IOException e) {
                     e.printStackTrace();
                     runOnUiThread(() ->
@@ -489,7 +511,24 @@ public class MainActivity extends AppCompatActivity {
             case ArtifactObject.STATUS.OUTDATED: return context.getString(R.string.artobj_status_odt);
             case ArtifactObject.STATUS.ERROR_LEARN: return context.getString(R.string.artobj_status_errl);
             case ArtifactObject.STATUS.ERROR: return context.getString(R.string.artobj_status_err);
+            case ArtifactObject.STATUS.NOT_MARKED: return context.getString(R.string.artobj_status_notmarked);
             default: return context.getString(R.string.artobj_status_err);
         }
     }
+
+    static int getStatusColor(ArtifactObject object) {
+        switch (object.getStatus()) {
+            case ArtifactObject.STATUS.READY_TL:
+            case ArtifactObject.STATUS.READY_FU: return 0xFF00CC00;
+            case ArtifactObject.STATUS.OUTDATED:
+            case ArtifactObject.STATUS.NOT_MARKED: return 0xFFCCCC00;
+            case ArtifactObject.STATUS.ERROR_LEARN:
+            case ArtifactObject.STATUS.ERROR: return 0xFFCC0000;
+            case ArtifactObject.STATUS.DOWNLOADING:
+            case ArtifactObject.STATUS.TRAINING:
+            default: return Color.BLACK;
+        }
+    }
+
+
 }

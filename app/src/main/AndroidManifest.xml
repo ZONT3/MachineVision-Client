@@ -19,7 +19,7 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".MarkActivity"></activity>
+        <activity android:name=".MarkActivity" />
         <activity android:name=".ResultsActivity" />
         <activity android:name=".GuessActivity" />
         <activity android:name=".MainActivity">

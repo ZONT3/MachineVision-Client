@@ -2,18 +2,15 @@ package ru.zont.mvc;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import com.bumptech.glide.Glide;
+
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 
 import ru.zont.mvc.core.ArtifactObject;
@@ -23,19 +20,12 @@ class BitmapHandler {
                                          @Nullable ArrayList<Integer> hide) throws IOException {
         if (!item.link.startsWith("http")) return null;
 
-        File temp = new File(context.getCacheDir(), "BHtemp");
-        temp.delete();
-
-        try (BufferedInputStream in = new BufferedInputStream(new URL(item.link).openStream());
-             FileOutputStream fos = new FileOutputStream(temp)) {
-            byte buff[] = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(buff, 0, 1024)) != -1)
-                fos.write(buff, 0, bytesRead);
+        Bitmap source;
+        try {
+            source = Glide.with(context).asBitmap().load(item.link).submit().get();
+        } catch (Throwable e){
+            throw new IOException("Cannot load image", e);
         }
-
-        Bitmap source = BitmapFactory.decodeFile(temp.getAbsolutePath());
-        if (source == null) throw new IOException("Cannot load image");
 
         Bitmap bitmap = source.copy(Bitmap.Config.ARGB_8888, true);
         for (int i = 0; i < item.layout.size(); i++) {

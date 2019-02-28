@@ -21,6 +21,7 @@ public class ArtifactObject implements Parcelable {
         public static final int TRAINING = 2;
         public static final int READY_FU = 3;
         public static final int OUTDATED = 4;
+        public static final int NOT_MARKED = 5;
     }
     public abstract class ACTION {
 
@@ -46,7 +47,7 @@ public class ArtifactObject implements Parcelable {
     public ArtifactObject(String title, ArrayList<Query> queries/*, ArrayList<File> customImages*/) {
         this.title = title;
         this.queries = queries;
-        status = STATUS.READY_TL;
+        status = hasUnmarked() ? STATUS.NOT_MARKED : STATUS.READY_TL;
         lastActType = ACTION.CREATED;
         lastAct = System.currentTimeMillis();
         created = lastAct;
@@ -97,6 +98,7 @@ public class ArtifactObject implements Parcelable {
         lastActType = ACTION.EDITED;
         lastAct = System.currentTimeMillis();
         if (learned >= 0) status = STATUS.OUTDATED;
+        if (hasUnmarked()) status = STATUS.NOT_MARKED;
     }
 
     public static class ImageItem implements Parcelable {

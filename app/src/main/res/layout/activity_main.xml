@@ -30,7 +30,7 @@
                 android:gravity="center"
                 android:text="@string/app_name_ex"
                 android:textAppearance="@android:style/TextAppearance.Material.Widget.Toolbar.Title"
-                android:theme="@style/AppThemeDark"
+                android:textColor="@android:color/primary_text_dark"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -48,6 +48,17 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.57"
                 app:srcCompat="@android:drawable/presence_invisible" />
+
+            <TextView
+                android:id="@+id/main_ver"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textAppearance="@android:style/TextAppearance.Material.Small.Inverse"
+                app:layout_constraintBottom_toBottomOf="@+id/main_title"
+                app:layout_constraintStart_toEndOf="@+id/main_svst"
+                app:layout_constraintTop_toTopOf="@+id/main_title"
+                tools:text="Client v.2.2.8" />
         </android.support.constraint.ConstraintLayout>
     </android.support.v7.widget.Toolbar>
 
@@ -64,6 +75,7 @@
     </android.support.v7.widget.RecyclerView>
 
     <android.support.design.widget.FloatingActionButton
+        android:id="@+id/main_guess"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
@@ -73,12 +85,12 @@
         android:onClick="onClickGuess"
         android:visibility="visible"
         app:fabSize="normal"
-        app:layout_constraintBottom_toTopOf="@+id/floatingActionButton2"
+        app:layout_constraintBottom_toTopOf="@+id/main_add"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_baseline_visibility" />
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/floatingActionButton2"
+        android:id="@+id/main_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
