@@ -6,7 +6,7 @@ android {
         applicationId "ru.zont.mvc"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 7
+        versionCode 8
         versionName "0.3.2.8"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
