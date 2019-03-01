@@ -98,7 +98,8 @@ public class ArtifactObject implements Parcelable {
         lastActType = ACTION.EDITED;
         lastAct = System.currentTimeMillis();
         if (learned >= 0) status = STATUS.OUTDATED;
-        if (hasUnmarked()) status = STATUS.NOT_MARKED;
+        else if (hasUnmarked()) status = STATUS.NOT_MARKED;
+        else status = STATUS.READY_TL;
     }
 
     public static class ImageItem implements Parcelable {

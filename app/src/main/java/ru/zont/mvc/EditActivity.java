@@ -40,6 +40,8 @@ public class EditActivity extends AppCompatActivity {
     private ArtifactObject toEdit;
     private Toolbar toolbar;
 
+    private String overrideThumb;
+
     @Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -101,7 +103,8 @@ public class EditActivity extends AppCompatActivity {
         if (toEdit == null)
             return !(title.getText().toString().isEmpty() && adapter.getQueries().size() == 0);
         else return !(toEdit.getTitle().equals(title.getText().toString())
-                && toEdit.queriesEquals(adapter.getQueries()));
+                && toEdit.queriesEquals(adapter.getQueries()))
+                || overrideThumb != null;
     }
 
     public void addQuery(View v) {
@@ -119,7 +122,12 @@ public class EditActivity extends AppCompatActivity {
                         Toast.makeText(this, "アホか？", Toast.LENGTH_LONG).show();
                         return;
                     }
-
+                    for (ArtifactObject.Query q : adapter.getQueries()) {
+                        if (q.title.equals(query)) {
+                            Toast.makeText(this, R.string.query_alrex, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
                     adapter.addLoadingQuery(query);
                     AsyncGetImages.execute(query, 8, this::onFetchImages);
                 })
@@ -178,7 +186,7 @@ public class EditActivity extends AppCompatActivity {
             return false;
         }
         if (adapter.getQueries().size() <= 0) {
-            Toast.makeText(this, R.string.edit_err_noquer, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.edit_err_noimgs, Toast.LENGTH_LONG).show();
             return false;
         }
 
@@ -243,11 +251,15 @@ public class EditActivity extends AppCompatActivity {
             toSend = toEdit;
         } else toSend = new ArtifactObject(title.getText().toString(), adapter.getQueries());
 
+        if (overrideThumb != null) toSend.setThumbnail(overrideThumb);
+
         try {
             Client.sendJsonForResult(
                     Request.create("new_object")
                             .put("artifact_object", toSend)
                             .toString());
+            runOnUiThread(() -> Toast
+                    .makeText(this, R.string.edit_saved, Toast.LENGTH_SHORT).show());
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -280,8 +292,11 @@ public class EditActivity extends AppCompatActivity {
         if (requestCode == REQUEST_RESULTS && resultCode == RESULT_OK && data != null) {
             if (data.hasExtra("delete"))
                 adapter.delete(data.getParcelableExtra("delete"));
-            else if (data.hasExtra("query"))
+            else if (data.hasExtra("query")) {
                 adapter.updateQuery(data.getParcelableExtra("query"));
+                if (data.hasExtra("newThumb"))
+                    overrideThumb = data.getStringExtra("newThumb");
+            }
         } else if (requestCode == REQUEST_MARKING && data != null && data.hasExtra(EXTRA_QUERY)) {
             adapter.updateQuery(data.getParcelableExtra(EXTRA_QUERY));
             if (resultCode == RESULT_OK) trySaveAndFinish(true);

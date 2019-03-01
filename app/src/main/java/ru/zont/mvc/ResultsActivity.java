@@ -70,6 +70,7 @@ public class ResultsActivity extends AppCompatActivity {
 
     private void onItemLongClick(ArtifactObject.ImageItem item) {
         setResult(RESULT_OK, resultData.putExtra("newThumb", item.link));
+        Toast.makeText(this, R.string.edit_thumb_set, Toast.LENGTH_SHORT).show();
     }
 
     public void onClickMore(View v) {
@@ -121,8 +122,13 @@ public class ResultsActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.results_menu_delete:
-                setResult(RESULT_OK, resultData.putExtra("delete", adapter.getQuery()));
-                finish();
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.areYouSure)
+                        .setNegativeButton(R.string.no, null)
+                        .setPositiveButton(R.string.yes, (i1, i2) -> {
+                            setResult(RESULT_OK, resultData.putExtra("delete", adapter.getQuery()));
+                            finish();
+                        }).create().show();
                 return true;
             case R.id.results_menu_mark:
                 startActivityForResult(new Intent(this, MarkActivity.class)

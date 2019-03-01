@@ -42,7 +42,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.HashMap;
 
 import ru.zont.mvc.core.ArtifactObject;
@@ -420,13 +420,16 @@ public class MainActivity extends AppCompatActivity {
         Button delete = root.findViewById(R.id.objpts_delete);
         Switch svvitch = root.findViewById(R.id.objpts_switch);
 
+        Calendar createdCal = Calendar.getInstance();
+        createdCal.setTimeInMillis(item.getCreated());
+
         title.setText(item.getTitle());
         status.setText(getStatusString(item, this));
         status.setTextColor(getStatusColor(item));
         queries.setText(item.getQueriesSize()+"");
         total.setText(item.getTotal()+"");
-        created.setText(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG)
-                .format(new Date(item.getCreated())));
+        created.setText(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.MEDIUM)
+                .format(createdCal.getTime()));
         trained.setText("---");
         svvitch.setChecked(item.isEnabled());
 
@@ -461,18 +464,23 @@ public class MainActivity extends AppCompatActivity {
                     .putExtra("object", item));
         });
         delete.setOnClickListener(v -> {
-            dialog.dismiss();
-            new Thread(() -> {
-                try {
-                    Client.sendJsonForResult(Request.create("delete_object")
-                            .put("id", item.getId()).toString());
-                    getList();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    runOnUiThread(() ->
-                            Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show());
-                }
-            }).start();
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.areYouSure)
+                    .setNegativeButton(R.string.no, null)
+                    .setPositiveButton(R.string.yes, (i1, i2) -> {
+                        dialog.dismiss();
+                        new Thread(() -> {
+                            try {
+                                Client.sendJsonForResult(Request.create("delete_object")
+                                        .put("id", item.getId()).toString());
+                                getList();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                runOnUiThread(() ->
+                                        Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show());
+                            }
+                        }).start();
+                    }).create().show();
         });
         svvitch.setOnCheckedChangeListener((buttonView, isChecked) -> new Thread(() -> {
             try {

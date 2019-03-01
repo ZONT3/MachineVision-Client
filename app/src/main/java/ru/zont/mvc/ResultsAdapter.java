@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.CircularProgressDrawable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -19,6 +20,8 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
+
+import java.util.ArrayList;
 
 import ru.zont.mvc.core.ArtifactObject;
 
@@ -40,6 +43,11 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
     private OnItemLongClickListener longListener;
     private int intentions;
     private int offset;
+
+    private static final long UNDO_TIMEOUT = 5000;
+    private long lastRemove = 0;
+    private ArrayList<ArtifactObject.ImageItem> removed = new ArrayList<>();
+    private ArrayList<Integer> removedIndexes = new ArrayList<>();
 
     ResultsAdapter(ArtifactObject.Query query) {
         this.query = query;
@@ -68,6 +76,13 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
 
         query.addNewImages(urls);
         notifyItemRangeChanged(startIntentPos, oldSize);
+    }
+
+    void insertImage(ArtifactObject.ImageItem item, int i) {
+        if (i > query.whitelist.size()) i = query.whitelist.size();
+        query.whitelist.add(i, item);
+        notifyItemInserted(i);
+        notifyItemRangeChanged(i, query.whitelist.size());
     }
 
     void modifyItem(ArtifactObject.ImageItem newInstance) {
@@ -141,9 +156,13 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
                 })
                 .into(vh.thumbnail);
         vh.del.setOnClickListener(v -> {
-            query.whitelist.remove(i);
-            notifyItemRemoved(i);
-            notifyItemRangeChanged(i, query.whitelist.size());
+            int rm = remove(i);
+            String rmstr = rm < 2 ? context.getString(R.string.edit_deleted)
+                    : context.getString(R.string.edit_deleted_mul, rm);
+            Snackbar.make(vh.itemView, rmstr, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.edit_del_undo, v1 -> undo())
+                    .setDuration((int) UNDO_TIMEOUT)
+                    .show();
         });
 
         vh.itemView.setOnClickListener(v -> {
@@ -155,6 +174,31 @@ public class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.VH> {
                 longListener.onItemLongClick(imageItem);
             return true;
         });
+    }
+
+    private void undo() {
+        for (int i = removed.size() - 1; i >= 0; i--) {
+            int ind = removedIndexes.get(i);
+            insertImage(removed.get(i), ind);
+        }
+        removed.clear();
+    }
+
+    private int remove(int i) {
+        ArtifactObject.ImageItem rm = query.whitelist.get(i);
+        query.whitelist.remove(i);
+        notifyItemRemoved(i);
+        notifyItemRangeChanged(i, query.whitelist.size());
+
+        if (System.currentTimeMillis() - lastRemove > UNDO_TIMEOUT) {
+            removed.clear();
+            removedIndexes.clear();
+        }
+        removed.add(rm);
+        removedIndexes.add(i);
+        lastRemove = System.currentTimeMillis();
+
+        return removed.size();
     }
 
     private void onLoadFailed(String url) {
