@@ -241,12 +241,12 @@ public class MainActivity extends AppCompatActivity {
             InetAddress address = InetAddress.getByName(testIp);
             String hostName = address.getCanonicalHostName();
 
-            if (!hostName.contains(testIp)) {
-                if (Client.tryConnection(testIp, port) == null) {
-                    ip = testIp;
-                    Client.setup(ip, port);
-                }
+//            if (!hostName.contains(testIp)) {
+            if (Client.tryConnection(testIp, port) == null) {
+                ip = testIp;
+                Client.setup(ip, port);
             }
+//            }
         } catch (UnknownHostException ignored) { }
     }
 
