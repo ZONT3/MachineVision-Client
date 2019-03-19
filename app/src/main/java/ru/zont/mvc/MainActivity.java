@@ -248,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
             String testIp = prefix + String.valueOf(i);
 
             InetAddress address = InetAddress.getByName(testIp);
-            String hostName = address.getCanonicalHostName();
+//            String hostName = address.getCanonicalHostName();
 
 //            if (!hostName.contains(testIp)) {
             if (Client.tryConnection(testIp, port) == null) {
@@ -435,14 +435,15 @@ public class MainActivity extends AppCompatActivity {
                             Bitmap bitmap = BitmapHandler.getBitmap(this, url, objectData, null);
                             bitmap.compress(Bitmap.CompressFormat.PNG, 100, new FileOutputStream(file));
 
-                            runOnUiThread(() ->
-                                    Toast.makeText(this, getString(R.string.guess_saved,
-                                             file.getAbsolutePath()), Toast.LENGTH_LONG).show());
+                            runOnUiThread(() -> {
+                                getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+                                Toast.makeText(this, getString(R.string.guess_saved,
+                                        file.getAbsolutePath()), Toast.LENGTH_LONG).show();
+                            });
 
                             Uri uri = FileProvider.getUriForFile(this, getApplicationContext()
                                     .getPackageName() + ".mvcprovider", file);
 
-                            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
                             startActivity(new Intent(Intent.ACTION_VIEW)
                                     .setDataAndType(uri, "image/*")
                                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
