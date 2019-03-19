@@ -19,6 +19,17 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning">
+        <provider
+            android:name=".GenericFileProvider"
+            android:authorities="${applicationId}.mvcprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
+
+
         <activity android:name=".MarkActivity" />
         <activity android:name=".ResultsActivity" />
         <activity android:name=".GuessActivity" />

@@ -63,4 +63,7 @@
     <string name="mark_remove">Remove mark</string>
     <string name="results_mark">Mark data</string>
     <string name="artobj_status_notmarked">Has unmarked images</string>
+    <string name="guess_saved">Saved to %s</string>
+    <string name="guess_w4s">Waiting for Server...</string>
+    <string name="guess_processing">Processing with result...</string>
 </resources>

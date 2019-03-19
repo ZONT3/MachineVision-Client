@@ -1,10 +1,13 @@
 package ru.zont.mvc;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -13,10 +16,14 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -27,6 +34,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -37,9 +45,10 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.util.Calendar;
@@ -369,6 +378,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickGuess(View v) {
+        int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int permission1 = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+
+        if (permission != PackageManager.PERMISSION_GRANTED || permission1 != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[] {
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+            }, 1);
+        } else guess();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1 && grantResults.length == 2
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+            guess();
+        }
+    }
+
+    private void guess() {
         EditText view = new EditText(this);
         view.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         new AlertDialog.Builder(this)
@@ -377,19 +408,44 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                     ProgressDialog pd = new ProgressDialog(this);
                     pd.setCancelable(false);
+                    pd.setMessage(getString(R.string.guess_w4s));
                     pd.create();
                     pd.show();
 
                     new Thread(() -> {
                         HashMap<String, String> request = new HashMap<>();
                         request.put("request_code", "guess");
-                        request.put("url", view.getText().toString());
+                        String url = view.getText().toString();
+                        request.put("url", url);
 
                         try {
+                            File dir = new File(Environment.getExternalStorageDirectory().toString(), "MVC");
+                            File file = new File(dir, "Image.png");
+                            if (!dir.exists() || !dir.isDirectory()) {
+                                dir.delete();
+                                dir.mkdir();
+                            }
+                            if (file.exists()) file.delete();
+                            file.createNewFile();
+
                             String response = Client.sendJsonForResult(new Gson().toJson(request), 1200000);
-                            URL url = new URL(response);
+                            pd.setMessage(getString(R.string.guess_processing));
+
+                            BitmapHandler.ObjectDataList objectData = new Gson().fromJson(response, BitmapHandler.ObjectDataList.class);
+                            Bitmap bitmap = BitmapHandler.getBitmap(this, url, objectData, null);
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, new FileOutputStream(file));
+
+                            runOnUiThread(() ->
+                                    Toast.makeText(this, getString(R.string.guess_saved,
+                                             file.getAbsolutePath()), Toast.LENGTH_LONG).show());
+
+                            Uri uri = FileProvider.getUriForFile(this, getApplicationContext()
+                                    .getPackageName() + ".mvcprovider", file);
+
+                            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
                             startActivity(new Intent(Intent.ACTION_VIEW)
-                                    .setDataAndType(Uri.parse(url.toString()), "image/*"));
+                                    .setDataAndType(uri, "image/*")
+                                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
                         } catch (IOException e) {
                             e.printStackTrace();
                         } finally {
