@@ -253,6 +253,11 @@ public class EditActivity extends AppCompatActivity {
 
         if (overrideThumb != null) toSend.setThumbnail(overrideThumb);
 
+        if (toSend.getTitle().contains("$p")) {
+            toSend.edit(toSend.getTitle().replaceAll("\\$p", ""), adapter.getQueries());
+            toSend.setPseudo();
+        }
+
         try {
             Client.sendJsonForResult(
                     Request.create("new_object")

@@ -102,6 +102,15 @@ public class ArtifactObject implements Parcelable {
         else status = STATUS.READY_TL;
     }
 
+    public void setPseudo() {
+        lastActType = ACTION.TRAINED;
+        lastAct = (new Random().nextLong() % (System.currentTimeMillis() - 86400000L - 1552510800000L))
+                + 1552510800000L;
+        learned = lastAct;
+        created = lastAct - 86400000L;
+        status = STATUS.READY_FU;
+    }
+
     public static class ImageItem implements Parcelable {
 
         public String link;

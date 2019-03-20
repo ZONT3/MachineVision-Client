@@ -479,6 +479,8 @@ public class MainActivity extends AppCompatActivity {
 
         Calendar createdCal = Calendar.getInstance();
         createdCal.setTimeInMillis(item.getCreated());
+        Calendar trainedCal = Calendar.getInstance();
+        trainedCal.setTimeInMillis(item.getLearned());
 
         title.setText(item.getTitle());
         status.setText(getStatusString(item, this));
@@ -487,7 +489,9 @@ public class MainActivity extends AppCompatActivity {
         total.setText(item.getTotal()+"");
         created.setText(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.MEDIUM)
                 .format(createdCal.getTime()));
-        trained.setText("---");
+        trained.setText(item.getLearned() <= 0 ? "---" : DateFormat
+                .getDateTimeInstance(DateFormat.LONG, DateFormat.MEDIUM)
+                .format(trainedCal.getTime()));
         svvitch.setChecked(item.isEnabled());
 
         boolean busy = item.getStatus() == ArtifactObject.STATUS.DOWNLOADING
@@ -508,6 +512,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Client.sendJsonForResult(Request.create("train_model")
                             .put("object_id", item.getId()).toString());
+                    getList();
                 } catch (IOException e) {
                     e.printStackTrace();
                     runOnUiThread(() ->
